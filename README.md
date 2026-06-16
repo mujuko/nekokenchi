@@ -12,6 +12,18 @@ npm run dev
 開発サーバーは `http://localhost:5187` で起動します。過去に別のPWAが使用した
 `localhost:5173` の Service Worker と衝突しないよう、専用ポートに固定しています。
 
+別端末やスマホからLAN経由でカメラを使う場合は、HTTPSで起動してください。初回だけ
+`mkcert` が必要です。
+
+```bash
+brew install mkcert
+mkcert -install
+npm run dev:https
+```
+
+起動ログに表示される `https://<MacのIPアドレス>:5187` を端末側のブラウザで開きます。
+IPアドレスが変わった場合は、次回起動時に `.cert` の開発用証明書を作り直します。
+
 カメラ映像と姿勢ランドマークはブラウザ内で処理され、サーバーには送信しません。
 
 ## プロダクションビルド
@@ -22,6 +34,8 @@ npm run preview
 ```
 
 プレビューは `http://localhost:5188` で起動します。
+
+LAN経由でプレビューする場合は `npm run preview:https` を使ってください。
 
 `dist/index.html` は直接開いても画面を確認できますが、ブラウザのセキュリティ制約により
 `file://` ではカメラを利用できません。カメラを使う場合は `npm run dev` または
