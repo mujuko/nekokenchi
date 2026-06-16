@@ -54,11 +54,25 @@ button {
   display: flex;
   align-items: center;
   gap: 12px;
+  min-width: 0;
   color: var(--ink);
   text-decoration: none;
   font-size: 20px;
   font-weight: 800;
   letter-spacing: 0.04em;
+}
+
+.brand-version {
+  padding: 3px 7px;
+  color: var(--muted);
+  background: rgba(49, 46, 41, 0.06);
+  border: 1px solid rgba(49, 46, 41, 0.1);
+  border-radius: 999px;
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0;
+  line-height: 1.2;
+  white-space: nowrap;
 }
 
 .brand-mark {
@@ -658,7 +672,19 @@ select,
   }
 
   .topbar {
+    gap: 14px;
     height: 72px;
+  }
+
+  .brand {
+    gap: 9px;
+    font-size: 17px;
+  }
+
+  .brand-mark {
+    flex: 0 0 auto;
+    width: 34px;
+    height: 31px;
   }
 
   .privacy {

@@ -16,6 +16,7 @@ const WASM_URL = `${import.meta.env.BASE_URL}mediapipe/wasm`;
 const STARTUP_TIMEOUT_MS = 30_000;
 const CALIBRATION_SAMPLE_MS = 3000;
 const CALIBRATION_TRANSITION_MS = 2500;
+const APP_VERSION = import.meta.env.VITE_APP_VERSION;
 
 document.querySelector<HTMLDivElement>("#app")!.innerHTML = `
   <main class="app-shell">
@@ -26,6 +27,7 @@ document.querySelector<HTMLDivElement>("#app")!.innerHTML = `
           <span class="face-dot face-dot-left"></span><span class="face-dot face-dot-right"></span>
         </span>
         <span>ねこ検知</span>
+        <span class="brand-version" aria-label="バージョン ${APP_VERSION}">${APP_VERSION}</span>
       </a>
       <div class="privacy"><span class="privacy-dot"></span>映像は端末内だけで処理</div>
     </header>

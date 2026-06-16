@@ -3,6 +3,7 @@ import { viteSingleFile } from "vite-plugin-singlefile";
 import { existsSync, readFileSync } from "node:fs";
 import { resolve } from "node:path";
 import { fileURLToPath } from "node:url";
+import { execSync } from "node:child_process";
 
 const rootDir = fileURLToPath(new URL(".", import.meta.url));
 const useDevHttps = process.env.VITE_DEV_HTTPS === "1";
@@ -28,8 +29,31 @@ function getDevHttpsOptions() {
 
 const devHttpsOptions = getDevHttpsOptions();
 
+function getAppVersion() {
+  try {
+    try {
+      execSync("git fetch --tags --force", {
+        cwd: rootDir,
+        stdio: "ignore",
+      });
+    } catch {
+      // Local/offline builds can still use whatever refs are already available.
+    }
+
+    return execSync("git describe --tags --always --dirty", {
+      cwd: rootDir,
+      encoding: "utf8",
+    }).trim();
+  } catch {
+    return "unknown";
+  }
+}
+
 export default defineConfig({
   base: "./",
+  define: {
+    "import.meta.env.VITE_APP_VERSION": JSON.stringify(getAppVersion()),
+  },
   plugins: [viteSingleFile()],
   server: {
     host: useDevHttps ? "0.0.0.0" : "localhost",
