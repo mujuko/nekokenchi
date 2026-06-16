@@ -29,6 +29,18 @@ function getDevHttpsOptions() {
 
 const devHttpsOptions = getDevHttpsOptions();
 
+function getPackageVersion() {
+  try {
+    const packageJson = JSON.parse(
+      readFileSync(resolve(rootDir, "package.json"), "utf8"),
+    ) as { version?: string };
+
+    return packageJson.version ? `v${packageJson.version}` : "unknown";
+  } catch {
+    return "unknown";
+  }
+}
+
 function getAppVersion() {
   try {
     try {
@@ -40,12 +52,18 @@ function getAppVersion() {
       // Local/offline builds can still use whatever refs are already available.
     }
 
-    return execSync("git describe --tags --always --dirty", {
+    const gitVersion = execSync("git describe --tags --always --dirty", {
       cwd: rootDir,
       encoding: "utf8",
     }).trim();
+
+    const bareHash = /^[0-9a-f]{7,40}(-dirty)?$/i.exec(gitVersion);
+    if (!bareHash) return gitVersion;
+
+    const packageVersion = getPackageVersion();
+    return `${packageVersion}${bareHash[1] ?? ""}`;
   } catch {
-    return "unknown";
+    return getPackageVersion();
   }
 }
 
