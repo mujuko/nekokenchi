@@ -31,18 +31,19 @@ const devHttpsOptions = getDevHttpsOptions();
 
 function getAppVersion() {
   try {
-    const version = execSync("git describe --tags --always --dirty", {
+    try {
+      execSync("git fetch --tags --force", {
+        cwd: rootDir,
+        stdio: "ignore",
+      });
+    } catch {
+      // Local/offline builds can still use whatever refs are already available.
+    }
+
+    return execSync("git describe --tags --always --dirty", {
       cwd: rootDir,
       encoding: "utf8",
     }).trim();
-    const isDirty = execSync("git status --porcelain", {
-      cwd: rootDir,
-      encoding: "utf8",
-    }).trim().length > 0;
-
-    return isDirty && !version.endsWith("-dirty")
-      ? `${version}-dirty`
-      : version;
   } catch {
     return "unknown";
   }
