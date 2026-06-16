@@ -14,6 +14,8 @@ import {
 const MODEL_URL = `${import.meta.env.BASE_URL}mediapipe/models/pose_landmarker_lite.task`;
 const WASM_URL = `${import.meta.env.BASE_URL}mediapipe/wasm`;
 const STARTUP_TIMEOUT_MS = 30_000;
+const CALIBRATION_SAMPLE_MS = 3000;
+const CALIBRATION_TRANSITION_MS = 2500;
 
 document.querySelector<HTMLDivElement>("#app")!.innerHTML = `
   <main class="app-shell">
@@ -33,7 +35,7 @@ document.querySelector<HTMLDivElement>("#app")!.innerHTML = `
         <p class="eyebrow">POSTURE WATCHER</p>
         <h1>背すじが丸まったら、<br><em>そっとお知らせ。</em></h1>
       </div>
-      <p class="hero-copy">カメラで頭の高さを見守り、猫背が続いたときだけ音で知らせます。まずはカメラを横か斜め横に置いてください。</p>
+      <p class="hero-copy">カメラで頭の高さを見守り、猫背が続いたときだけ音で知らせます。まずは正面から、目線に近い高さで映してください。</p>
     </section>
 
     <section class="workspace">
@@ -50,8 +52,8 @@ document.querySelector<HTMLDivElement>("#app")!.innerHTML = `
           </div>
           <div class="calibration-overlay" id="calibration-overlay" hidden>
             <div class="countdown-ring"><span id="countdown">3</span></div>
-            <strong>背すじを伸ばして、そのまま</strong>
-            <small>良い姿勢の頭の高さを覚えています</small>
+            <strong id="calibration-title">背すじを伸ばして、そのまま</strong>
+            <small id="calibration-help">良い姿勢の頭の高さを覚えています</small>
           </div>
           <div class="status-pill" id="status-pill" hidden>
             <span></span><b id="status-label">計測中</b>
@@ -89,9 +91,9 @@ document.querySelector<HTMLDivElement>("#app")!.innerHTML = `
           <label class="setting-row">
             <span><b>感度</b><small>頭がどれくらい下がったら検知するか</small></span>
             <select id="sensitivity">
-              <option value="0.1">ゆるめ</option>
-              <option value="0.075" selected>ふつう</option>
-              <option value="0.05">敏感</option>
+              <option value="0.9">ゆるめ</option>
+              <option value="0.75" selected>ふつう</option>
+              <option value="0.6">敏感</option>
             </select>
           </label>
           <label class="setting-row">
@@ -110,7 +112,7 @@ document.querySelector<HTMLDivElement>("#app")!.innerHTML = `
 
         <div class="tip">
           <span class="tip-icon">i</span>
-          <p><b>うまく測るコツ</b>顔と肩が映る距離で、カメラを横〜斜め横に置くと変化を捉えやすくなります。</p>
+          <p><b>うまく測るコツ</b>顔と肩が正面から映る距離で、極端な見下ろしや見上げの画角を避けると安定します。</p>
         </div>
       </aside>
     </section>
@@ -124,6 +126,10 @@ const placeholder = document.querySelector<HTMLDivElement>("#camera-placeholder"
 const calibrationOverlay =
   document.querySelector<HTMLDivElement>("#calibration-overlay")!;
 const countdown = document.querySelector<HTMLSpanElement>("#countdown")!;
+const calibrationTitle =
+  document.querySelector<HTMLElement>("#calibration-title")!;
+const calibrationHelp =
+  document.querySelector<HTMLElement>("#calibration-help")!;
 const startButton = document.querySelector<HTMLButtonElement>("#start-button")!;
 const calibrateButton =
   document.querySelector<HTMLButtonElement>("#calibrate-button")!;
@@ -144,10 +150,13 @@ let stream: MediaStream | null = null;
 let animationFrame = 0;
 let lastVideoTime = -1;
 let calibrating = false;
+let calibrationStep: "good" | "transition" | "bad" | null = null;
 let calibrationStartedAt = 0;
 let calibrationSamples: number[] = [];
+let calibratedGoodY: number | null = null;
 let postureState: PostureState = {
-  baselineY: null,
+  goodY: null,
+  badY: null,
   badSince: null,
   lastAlertAt: null,
 };
@@ -322,18 +331,23 @@ function stopCamera() {
   startButton.textContent = "カメラを起動";
   startButton.classList.remove("stop");
   startButton.onclick = startCamera;
-  postureState = { baselineY: null, badSince: null, lastAlertAt: null };
+  postureState = { goodY: null, badY: null, badSince: null, lastAlertAt: null };
   updateStatus("idle", 0, 0);
 }
 
 function beginCalibration() {
   calibrating = true;
+  calibrationStep = "good";
   calibrationStartedAt = performance.now();
   calibrationSamples = [];
+  calibratedGoodY = null;
   calibrationOverlay.hidden = false;
+  calibrationTitle.textContent = "背すじを伸ばして、そのまま";
+  calibrationHelp.textContent = "良い姿勢の頭の高さを覚えています";
+  countdown.textContent = "3";
   statusLabel.textContent = "姿勢を登録中";
   statusPill.className = "status-pill calibrating";
-  postureState = { baselineY: null, badSince: null, lastAlertAt: null };
+  postureState = { goodY: null, badY: null, badSince: null, lastAlertAt: null };
 }
 
 function resizeCanvas() {
@@ -364,24 +378,7 @@ function predict() {
       }
 
       if (calibrating) {
-        calibrationSamples.push(nose.y);
-        const elapsed = now - calibrationStartedAt;
-        countdown.textContent = String(Math.max(1, Math.ceil((3000 - elapsed) / 1000)));
-
-        if (elapsed >= 3000) {
-          const baseline = average(calibrationSamples);
-          if (baseline !== null) {
-            postureState = {
-              baselineY: baseline,
-              badSince: null,
-              lastAlertAt: null,
-            };
-            calibrating = false;
-            calibrationOverlay.hidden = true;
-            statusLabel.textContent = "見守り中";
-            statusPill.className = "status-pill";
-          }
-        }
+        handleCalibrationSample(nose.y, now);
         return;
       }
 
@@ -397,19 +394,70 @@ function predict() {
         flashAlert();
       }
 
-      const progress = Math.min(
-        1,
-        postureResult.drop / Number(sensitivity.value),
-      );
       updateStatus(
         postureResult.isBad ? "bad" : "good",
-        progress,
+        postureResult.score,
         postureResult.badDurationMs,
       );
     });
   }
 
   animationFrame = requestAnimationFrame(predict);
+}
+
+function handleCalibrationSample(noseY: number, now: number) {
+  const elapsed = now - calibrationStartedAt;
+
+  if (calibrationStep === "transition") {
+    countdown.textContent = String(
+      Math.max(1, Math.ceil((CALIBRATION_TRANSITION_MS - elapsed) / 1000)),
+    );
+
+    if (elapsed >= CALIBRATION_TRANSITION_MS) {
+      calibrationStep = "bad";
+      calibrationStartedAt = now;
+      calibrationSamples = [];
+      calibrationTitle.textContent = "猫背になって、そのまま";
+      calibrationHelp.textContent = "ここをアウト水準として覚えます";
+      countdown.textContent = "3";
+    }
+    return;
+  }
+
+  calibrationSamples.push(noseY);
+  countdown.textContent = String(
+    Math.max(1, Math.ceil((CALIBRATION_SAMPLE_MS - elapsed) / 1000)),
+  );
+
+  if (elapsed < CALIBRATION_SAMPLE_MS) return;
+
+  const averageY = average(calibrationSamples);
+  if (averageY === null) return;
+
+  if (calibrationStep === "good") {
+    calibratedGoodY = averageY;
+    calibrationStep = "transition";
+    calibrationStartedAt = now;
+    calibrationSamples = [];
+    calibrationTitle.textContent = "猫背の姿勢へ";
+    calibrationHelp.textContent = "頭を下げたアウト姿勢を次に登録します";
+    countdown.textContent = "3";
+    return;
+  }
+
+  if (calibrationStep === "bad" && calibratedGoodY !== null) {
+    postureState = {
+      goodY: calibratedGoodY,
+      badY: averageY,
+      badSince: null,
+      lastAlertAt: null,
+    };
+    calibrating = false;
+    calibrationStep = null;
+    calibrationOverlay.hidden = true;
+    statusLabel.textContent = "見守り中";
+    statusPill.className = "status-pill";
+  }
 }
 
 function drawPose(landmarks: NormalizedLandmark[] | undefined) {
@@ -429,10 +477,22 @@ function drawPose(landmarks: NormalizedLandmark[] | undefined) {
     lineWidth: 1,
   });
 
-  if (postureState.baselineY !== null) {
-    const y = postureState.baselineY * canvas.height;
+  if (postureState.goodY !== null) {
+    const y = postureState.goodY * canvas.height;
     context.setLineDash([10, 10]);
     context.strokeStyle = "rgba(243, 163, 58, .9)";
+    context.lineWidth = 3;
+    context.beginPath();
+    context.moveTo(0, y);
+    context.lineTo(canvas.width, y);
+    context.stroke();
+    context.setLineDash([]);
+  }
+
+  if (postureState.badY !== null) {
+    const y = postureState.badY * canvas.height;
+    context.setLineDash([4, 8]);
+    context.strokeStyle = "rgba(233, 91, 70, .9)";
     context.lineWidth = 3;
     context.beginPath();
     context.moveTo(0, y);

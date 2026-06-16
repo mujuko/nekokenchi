@@ -2,7 +2,7 @@ import { describe, expect, it } from "vitest";
 import { average, evaluatePosture, type PostureState } from "./posture";
 
 const settings = {
-  threshold: 0.08,
+  threshold: 0.75,
   warningDurationMs: 3000,
   cooldownMs: 10000,
 };
@@ -10,7 +10,8 @@ const settings = {
 describe("evaluatePosture", () => {
   it("alerts after bad posture continues for the configured duration", () => {
     const initial: PostureState = {
-      baselineY: 0.3,
+      goodY: 0.3,
+      badY: 0.4,
       badSince: null,
       lastAlertAt: null,
     };
@@ -21,9 +22,23 @@ describe("evaluatePosture", () => {
     expect(alerted.shouldAlert).toBe(true);
   });
 
+  it("scores posture by closeness to the calibrated bad posture", () => {
+    const state: PostureState = {
+      goodY: 0.3,
+      badY: 0.5,
+      badSince: null,
+      lastAlertAt: null,
+    };
+    const result = evaluatePosture(0.45, 1000, state, settings);
+
+    expect(result.score).toBeCloseTo(0.75);
+    expect(result.isBad).toBe(true);
+  });
+
   it("resets the timer when posture recovers", () => {
     const state: PostureState = {
-      baselineY: 0.3,
+      goodY: 0.3,
+      badY: 0.4,
       badSince: 1000,
       lastAlertAt: null,
     };
@@ -35,7 +50,8 @@ describe("evaluatePosture", () => {
 
   it("respects the alert cooldown", () => {
     const state: PostureState = {
-      baselineY: 0.3,
+      goodY: 0.3,
+      badY: 0.4,
       badSince: 1000,
       lastAlertAt: 3500,
     };
