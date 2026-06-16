@@ -323,6 +323,7 @@ function stopCamera() {
   stream?.getTracks().forEach((track) => track.stop());
   stream = null;
   video.srcObject = null;
+  clearOverlay();
   video.classList.remove("visible");
   placeholder.hidden = false;
   statusPill.hidden = true;
@@ -331,6 +332,8 @@ function stopCamera() {
   startButton.textContent = "カメラを起動";
   startButton.classList.remove("stop");
   startButton.onclick = startCamera;
+  calibrating = false;
+  calibrationStep = null;
   postureState = { goodY: null, badY: null, badSince: null, lastAlertAt: null };
   updateStatus("idle", 0, 0);
 }
@@ -355,6 +358,11 @@ function resizeCanvas() {
   canvas.height = video.videoHeight || cameraStage.clientHeight;
 }
 
+function clearOverlay() {
+  const context = canvas.getContext("2d")!;
+  context.clearRect(0, 0, canvas.width, canvas.height);
+}
+
 function predict() {
   if (!poseLandmarker || !stream) return;
 
@@ -362,6 +370,11 @@ function predict() {
   if (video.currentTime !== lastVideoTime && video.readyState >= 2) {
     lastVideoTime = video.currentTime;
     poseLandmarker.detectForVideo(video, now, (poseResult) => {
+      if (!stream) {
+        clearOverlay();
+        return;
+      }
+
       const landmarks = poseResult.landmarks[0];
       drawPose(landmarks);
 
@@ -461,10 +474,10 @@ function handleCalibrationSample(noseY: number, now: number) {
 }
 
 function drawPose(landmarks: NormalizedLandmark[] | undefined) {
-  const context = canvas.getContext("2d")!;
-  context.clearRect(0, 0, canvas.width, canvas.height);
+  clearOverlay();
   if (!landmarks) return;
 
+  const context = canvas.getContext("2d")!;
   const drawing = new DrawingUtils(context);
   drawing.drawConnectors(landmarks, PoseLandmarker.POSE_CONNECTIONS, {
     color: "rgba(255, 255, 255, .5)",
