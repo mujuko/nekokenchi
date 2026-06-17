@@ -93,6 +93,48 @@ export function renderApp(appVersion: string) {
   `;
 }
 
+export type AppElements = ReturnType<typeof getAppElements>;
+
+export function getAppElements() {
+  return {
+    video: query<HTMLVideoElement>("#video"),
+    canvas: query<HTMLCanvasElement>("#overlay"),
+    cameraStage: query<HTMLDivElement>("#camera-stage"),
+    placeholder: query<HTMLDivElement>("#camera-placeholder"),
+    calibrationOverlay: query<HTMLDivElement>("#calibration-overlay"),
+    countdown: query<HTMLSpanElement>("#countdown"),
+    calibrationTitle: query<HTMLElement>("#calibration-title"),
+    calibrationHelp: query<HTMLElement>("#calibration-help"),
+    startButton: query<HTMLButtonElement>("#start-button"),
+    startButtonLabel: query<HTMLSpanElement>("#start-button-label"),
+    calibrateButton: query<HTMLButtonElement>("#calibrate-button"),
+    statusPill: query<HTMLDivElement>("#status-pill"),
+    statusLabel: query<HTMLElement>("#status-label"),
+    postureBadges: queryAll<HTMLDivElement>("[data-posture-badge]"),
+    meterFills: queryAll<HTMLDivElement>("[data-meter-fill]"),
+    metricMessages: queryAll<HTMLParagraphElement>("[data-metric-message]"),
+    sensitivity: query<HTMLSelectElement>("#sensitivity"),
+    duration: query<HTMLSelectElement>("#duration"),
+    soundVolume: query<HTMLInputElement>("#sound-volume"),
+    muteButton: query<HTMLButtonElement>("#mute-button"),
+    soundButton: query<HTMLButtonElement>("#sound-button"),
+    alertFlash: query<HTMLDivElement>("#alert-flash"),
+    menuButton: document.querySelector<HTMLButtonElement>("#menu-button"),
+    closeMenuButton:
+      document.querySelector<HTMLButtonElement>("#close-menu-button"),
+    menuScrim: document.querySelector<HTMLDivElement>("#menu-scrim"),
+    mobileMenu: query<HTMLElement>("#mobile-menu"),
+  };
+}
+
+function query<T extends Element>(selector: string): T {
+  return document.querySelector<T>(selector)!;
+}
+
+function queryAll<T extends Element>(selector: string): NodeListOf<T> {
+  return document.querySelectorAll<T>(selector);
+}
+
 function posturePanel(extraClass: string, mobile: boolean) {
   return `
     <div class="metric-card ${extraClass} ${mobile ? "mobile-only" : "desktop-metric"}">
