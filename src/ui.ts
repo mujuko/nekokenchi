@@ -81,6 +81,7 @@ export function renderApp(appVersion: string) {
           </div>
           <nav class="menu-links mobile-only" aria-label="アプリ情報">
             <a href="https://github.com/mujuko/nekokenchi" target="_blank" rel="noreferrer">${githubIcon()}<span>ソースコード</span></a>
+            <a href="https://pocket-se.info/" target="_blank" rel="noreferrer">効果音: ポケットサウンド</a>
             <span>© 第一無重工</span>
           </nav>
         </aside>
@@ -88,6 +89,7 @@ export function renderApp(appVersion: string) {
 
       <footer class="app-footer desktop-only">
         <span>© 第一無重工</span>
+        <a href="https://pocket-se.info/" target="_blank" rel="noreferrer">効果音: ポケットサウンド</a>
       </footer>
     </main>
   `;
@@ -115,6 +117,7 @@ export function getAppElements() {
     metricMessages: queryAll<HTMLParagraphElement>("[data-metric-message]"),
     sensitivity: query<HTMLSelectElement>("#sensitivity"),
     duration: query<HTMLSelectElement>("#duration"),
+    soundChoices: queryAll<HTMLInputElement>("[data-sound-choice]"),
     soundVolume: query<HTMLInputElement>("#sound-volume"),
     muteButton: query<HTMLButtonElement>("#mute-button"),
     soundButton: query<HTMLButtonElement>("#sound-button"),
@@ -176,8 +179,15 @@ function settingsPanel() {
         </select>
       </label>
       <div class="setting-row sound-setting">
-        <span><b>通知音</b><small>電子音でお知らせ</small></span>
+        <span><b>通知音</b><small>複数選ぶとランダムに再生</small></span>
         <div class="sound-controls">
+          <div class="sound-choice-list" aria-label="通知音の種類">
+            <label><input type="checkbox" value="tone" data-sound-choice checked>電子音</label>
+            <label><input type="checkbox" value="cat10" data-sound-choice>ねこ 1</label>
+            <label><input type="checkbox" value="cat11" data-sound-choice>ねこ 2</label>
+            <label><input type="checkbox" value="cat15" data-sound-choice>ねこ 3</label>
+            <label><input type="checkbox" value="cat30" data-sound-choice>ねこ 4</label>
+          </div>
           <div class="sound-volume">
             <button class="sound-button mute-button" id="mute-button" type="button" aria-pressed="false" aria-label="通知音をミュート">ミュート</button>
             <input id="sound-volume" type="range" min="0" max="100" step="5" value="50" aria-label="通知音の音量">
