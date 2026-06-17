@@ -25,6 +25,14 @@ IPアドレスが変わった場合は、次回起動時に `.cert` の開発用
 
 カメラ映像と姿勢ランドマークはブラウザ内で処理され、サーバーには送信しません。
 
+## ライセンス
+
+このプロジェクト本体は MIT License です。
+
+同梱している MediaPipe Tasks Vision の WASM ファイルと Pose Landmarker Lite モデルは
+Apache License 2.0 で提供されています。第三者ライセンス表記は
+`public/THIRD_PARTY_NOTICES.txt` を参照してください。
+
 ## プロダクションビルド
 
 ```bash
