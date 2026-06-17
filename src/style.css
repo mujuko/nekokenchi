@@ -163,6 +163,10 @@ button {
   padding: 7px 9px;
 }
 
+.language-select-desktop select {
+  background: rgba(255, 253, 248, 0.46);
+}
+
 .menu-button,
 .close-button {
   border: 0;
@@ -203,8 +207,8 @@ button {
   width: 34px;
   height: 34px;
   color: rgba(49, 46, 41, 0.58);
-  background: rgba(255, 253, 248, 0.46);
-  border: 1px solid rgba(49, 46, 41, 0.12);
+  background: #f1ede5;
+  border: 1px solid #e1dbd0;
   border-radius: 7px;
   text-decoration: none;
   transition: color 0.2s ease, background 0.2s ease, border-color 0.2s ease;
@@ -1083,8 +1087,8 @@ select,
 
   .menu-links {
     display: grid !important;
-    gap: 12px;
-    padding: 4px 2px;
+    gap: 16px;
+    padding: 8px 2px 4px;
     color: var(--muted);
     font-size: 12px;
     font-weight: 700;
@@ -1096,6 +1100,23 @@ select,
     gap: 8px;
     color: var(--ink);
     text-decoration: none;
+  }
+
+  .menu-links a:first-child {
+    justify-content: center;
+    width: 100%;
+    min-height: 44px;
+    padding: 0 14px;
+    background: rgba(255, 253, 248, 0.46);
+    border: 1px solid #d8d0c2;
+    border-radius: 9px;
+    box-shadow: 0 1px 0 rgba(49, 46, 41, 0.1);
+    font-weight: 800;
+  }
+
+  .menu-links a:first-child:active {
+    box-shadow: none;
+    transform: translateY(1px);
   }
 
   .menu-links a[href*="pocket-se.info"] {
