@@ -8,6 +8,7 @@ import {
   playVideo,
 } from "./camera";
 import { createCalibrationController } from "./calibration";
+import { createDesktopNotifier } from "./desktopNotification";
 import { createOverlay } from "./overlay";
 import { createLandmarker } from "./poseLandmarker";
 import type { SoundController } from "./sound";
@@ -18,13 +19,18 @@ export function createPostureWatcher(
   statusView: StatusView,
   sound: SoundController,
 ) {
+  const BACKGROUND_PREDICTION_INTERVAL_MS = 125;
+
   let poseLandmarker: PoseLandmarker | null = null;
   let stream: MediaStream | null = null;
   let animationFrame = 0;
+  let backgroundTimer = 0;
   let lastVideoTime = -1;
+  let predicting = false;
   let postureState: PostureState = createEmptyPostureState();
 
   const overlay = createOverlay(elements, () => postureState);
+  const desktopNotifier = createDesktopNotifier();
   const calibration = createCalibrationController(
     elements,
     (state) => {
@@ -33,6 +39,9 @@ export function createPostureWatcher(
   );
 
   async function startCamera() {
+    void sound.unlock();
+    void desktopNotifier.requestPermission();
+
     if (!isCameraContextAvailable()) {
       showStartupError(
         "カメラは file:// では利用できません。npm run dev または npm run preview で開いてください。",
@@ -68,7 +77,7 @@ export function createPostureWatcher(
       elements.startButton.onclick = stopCamera;
       overlay.resizeCanvas();
       calibration.begin();
-      predict();
+      scheduleNextPrediction();
     } catch (error) {
       stream?.getTracks().forEach((track) => track.stop());
       stream = null;
@@ -78,7 +87,7 @@ export function createPostureWatcher(
   }
 
   function stopCamera() {
-    cancelAnimationFrame(animationFrame);
+    cancelScheduledPrediction();
     stream?.getTracks().forEach((track) => track.stop());
     stream = null;
     elements.video.srcObject = null;
@@ -96,13 +105,42 @@ export function createPostureWatcher(
     statusView.updateStatus("idle", 0, 0);
   }
 
+  function cancelScheduledPrediction() {
+    cancelAnimationFrame(animationFrame);
+    window.clearTimeout(backgroundTimer);
+    animationFrame = 0;
+    backgroundTimer = 0;
+    predicting = false;
+  }
+
+  function scheduleNextPrediction() {
+    cancelAnimationFrame(animationFrame);
+    window.clearTimeout(backgroundTimer);
+
+    if (document.hidden) {
+      backgroundTimer = window.setTimeout(
+        predict,
+        BACKGROUND_PREDICTION_INTERVAL_MS,
+      );
+      return;
+    }
+
+    animationFrame = requestAnimationFrame(predict);
+  }
+
   function predict() {
     if (!poseLandmarker || !stream) return;
+    if (predicting) {
+      scheduleNextPrediction();
+      return;
+    }
 
     const now = performance.now();
     if (elements.video.currentTime !== lastVideoTime && elements.video.readyState >= 2) {
       lastVideoTime = elements.video.currentTime;
+      predicting = true;
       poseLandmarker.detectForVideo(elements.video, now, (poseResult) => {
+        predicting = false;
         if (!stream) {
           overlay.clear();
           return;
@@ -136,7 +174,8 @@ export function createPostureWatcher(
         postureState = postureResult.state;
 
         if (postureResult.shouldAlert) {
-          sound.playAlert();
+          void sound.playAlert();
+          desktopNotifier.notifyBadPosture();
           sound.flashAlert();
         }
 
@@ -148,7 +187,7 @@ export function createPostureWatcher(
       });
     }
 
-    animationFrame = requestAnimationFrame(predict);
+    scheduleNextPrediction();
   }
 
   function showStartupError(message: string) {
@@ -169,6 +208,10 @@ export function createPostureWatcher(
   }
 
   window.addEventListener("resize", overlay.resizeCanvas);
+  document.addEventListener("visibilitychange", () => {
+    if (!stream) return;
+    scheduleNextPrediction();
+  });
 
   return {
     beginCalibration: calibration.begin,

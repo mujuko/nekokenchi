@@ -8,6 +8,7 @@ const BASE_ALERT_GAIN = 0.22;
 const MAX_ALERT_GAIN = 1;
 
 export function createSoundController(elements: AppElements) {
+  let audio: AudioContext | null = null;
   let lastAudibleVolume = DEFAULT_SOUND_VOLUME;
 
   function loadSettings() {
@@ -33,7 +34,9 @@ export function createSoundController(elements: AppElements) {
   }
 
   function bindControls() {
-    elements.soundButton.onclick = playAlert;
+    elements.soundButton.onclick = () => {
+      void playAlert();
+    };
     elements.soundVolume.addEventListener("input", () => {
       setVolume(Number(elements.soundVolume.value));
     });
@@ -74,15 +77,27 @@ export function createSoundController(elements: AppElements) {
     saveSettings();
   }
 
-  function playAlert() {
-    const volume = Number(elements.soundVolume.value) / 100;
-    if (volume <= 0) return;
-
+  function createAudioContext() {
     const AudioContextClass =
       window.AudioContext ||
       (window as typeof window & { webkitAudioContext: typeof AudioContext })
         .webkitAudioContext;
-    const audio = new AudioContextClass();
+
+    return new AudioContextClass();
+  }
+
+  async function unlock() {
+    audio ??= createAudioContext();
+    if (audio.state === "suspended") await audio.resume();
+  }
+
+  async function playAlert() {
+    const volume = Number(elements.soundVolume.value) / 100;
+    if (volume <= 0) return;
+
+    await unlock();
+    if (!audio) return;
+
     const oscillator = audio.createOscillator();
     const gain = audio.createGain();
     const start = audio.currentTime;
@@ -98,7 +113,10 @@ export function createSoundController(elements: AppElements) {
     gain.connect(audio.destination);
     oscillator.start(start);
     oscillator.stop(start + 0.72);
-    oscillator.addEventListener("ended", () => audio.close());
+    oscillator.addEventListener("ended", () => {
+      oscillator.disconnect();
+      gain.disconnect();
+    });
   }
 
   function flashAlert() {
@@ -118,6 +136,7 @@ export function createSoundController(elements: AppElements) {
     flashAlert,
     loadSettings,
     playAlert,
+    unlock,
   };
 }
 
