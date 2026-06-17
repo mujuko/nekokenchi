@@ -683,6 +683,38 @@ select,
   color: var(--orange-dark);
 }
 
+.sound-controls {
+  display: grid;
+  gap: 9px;
+  width: min(100%, 216px);
+  justify-self: end;
+}
+
+.sound-volume {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr);
+  align-items: center;
+  gap: 8px;
+}
+
+.sound-volume input {
+  min-width: 0;
+  width: 100%;
+  accent-color: var(--orange-dark);
+}
+
+.mute-button {
+  min-width: 68px;
+}
+
+.sound-test-button {
+  width: 100%;
+}
+
+.sound-button.muted {
+  color: #6f8c77;
+}
+
 .tip {
   display: flex;
   gap: 12px;
@@ -974,6 +1006,18 @@ select,
   .setting-row {
     align-items: flex-start;
     padding: 14px 0;
+  }
+
+  .sound-setting {
+    display: grid;
+    gap: 11px;
+    width: 100%;
+    justify-content: stretch;
+  }
+
+  .sound-controls {
+    width: min(100%, 216px);
+    justify-self: end;
   }
 
   .menu-links {

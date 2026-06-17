@@ -47,6 +47,9 @@ const metricMessages =
 const sensitivity =
   document.querySelector<HTMLSelectElement>("#sensitivity")!;
 const duration = document.querySelector<HTMLSelectElement>("#duration")!;
+const soundVolume =
+  document.querySelector<HTMLInputElement>("#sound-volume")!;
+const muteButton = document.querySelector<HTMLButtonElement>("#mute-button")!;
 const soundButton = document.querySelector<HTMLButtonElement>("#sound-button")!;
 const alertFlash = document.querySelector<HTMLDivElement>("#alert-flash")!;
 const menuButton = document.querySelector<HTMLButtonElement>("#menu-button");
@@ -70,6 +73,14 @@ let postureState: PostureState = {
   badSince: null,
   lastAlertAt: null,
 };
+let lastAudibleVolume = 50;
+
+const SOUND_VOLUME_KEY = "nekokenchi:sound-volume";
+const SOUND_MUTED_KEY = "nekokenchi:sound-muted";
+const SOUND_LAST_AUDIBLE_VOLUME_KEY = "nekokenchi:sound-last-audible-volume";
+const DEFAULT_SOUND_VOLUME = 50;
+const BASE_ALERT_GAIN = 0.22;
+const MAX_ALERT_GAIN = 1;
 
 function setStartButtonLabel(label: string) {
   startButtonLabel.textContent = label;
@@ -98,6 +109,68 @@ function setMenuOpen(open: boolean) {
   mobileMenu.classList.toggle("open", open);
   menuButton?.setAttribute("aria-expanded", String(open));
   if (menuScrim) menuScrim.hidden = !open;
+}
+
+function loadSoundSettings() {
+  const savedVolumeRaw = localStorage.getItem(SOUND_VOLUME_KEY);
+  const savedVolume = Number(savedVolumeRaw);
+  const savedLastAudibleVolume = Number(
+    localStorage.getItem(SOUND_LAST_AUDIBLE_VOLUME_KEY),
+  );
+  const mutedByOldSetting = localStorage.getItem(SOUND_MUTED_KEY) === "true";
+  const initialVolume =
+    savedVolumeRaw !== null && Number.isFinite(savedVolume)
+      ? clampSoundVolume(savedVolume)
+      : DEFAULT_SOUND_VOLUME;
+
+  if (Number.isFinite(savedLastAudibleVolume) && savedLastAudibleVolume > 0) {
+    lastAudibleVolume = clampSoundVolume(savedLastAudibleVolume);
+  } else if (initialVolume > 0) {
+    lastAudibleVolume = initialVolume;
+  }
+
+  soundVolume.value = String(mutedByOldSetting ? 0 : initialVolume);
+  updateSoundControls();
+}
+
+function updateSoundControls() {
+  const volume = Number(soundVolume.value);
+  const muted = volume <= 0;
+
+  soundVolume.setAttribute("aria-valuetext", `${volume}%`);
+  muteButton.classList.toggle("muted", muted);
+  muteButton.textContent = muted ? "解除" : "ミュート";
+  muteButton.setAttribute("aria-pressed", String(muted));
+  muteButton.setAttribute(
+    "aria-label",
+    muted ? "通知音のミュートを解除" : "通知音をミュート",
+  );
+}
+
+function saveSoundSettings() {
+  localStorage.setItem(SOUND_VOLUME_KEY, soundVolume.value);
+  localStorage.setItem(SOUND_LAST_AUDIBLE_VOLUME_KEY, String(lastAudibleVolume));
+  localStorage.removeItem(SOUND_MUTED_KEY);
+}
+
+function clampSoundVolume(volume: number) {
+  return Math.min(100, Math.max(0, Math.round(volume / 5) * 5));
+}
+
+function setSoundVolume(volume: number) {
+  const nextVolume = clampSoundVolume(volume);
+  soundVolume.value = String(nextVolume);
+  if (nextVolume > 0) lastAudibleVolume = nextVolume;
+  updateSoundControls();
+  saveSoundSettings();
+}
+
+function getAlertGain(volume: number) {
+  if (volume <= 0.5) return BASE_ALERT_GAIN * (volume / 0.5);
+  return (
+    BASE_ALERT_GAIN +
+    (MAX_ALERT_GAIN - BASE_ALERT_GAIN) * ((volume - 0.5) / 0.5)
+  );
 }
 
 async function createLandmarker() {
@@ -487,6 +560,9 @@ function updateStatus(
 }
 
 function playAlert() {
+  const volume = Number(soundVolume.value) / 100;
+  if (volume <= 0) return;
+
   const AudioContextClass =
     window.AudioContext ||
     (window as typeof window & { webkitAudioContext: typeof AudioContext })
@@ -501,7 +577,7 @@ function playAlert() {
   oscillator.frequency.exponentialRampToValueAtTime(430, start + 0.34);
   oscillator.frequency.exponentialRampToValueAtTime(600, start + 0.62);
   gain.gain.setValueAtTime(0.0001, start);
-  gain.gain.exponentialRampToValueAtTime(0.22, start + 0.03);
+  gain.gain.exponentialRampToValueAtTime(getAlertGain(volume), start + 0.03);
   gain.gain.exponentialRampToValueAtTime(0.0001, start + 0.7);
   oscillator.connect(gain);
   gain.connect(audio.destination);
@@ -525,6 +601,13 @@ function flashAlert() {
 startButton.onclick = startCamera;
 calibrateButton.onclick = beginCalibration;
 soundButton.onclick = playAlert;
+soundVolume.addEventListener("input", () => {
+  setSoundVolume(Number(soundVolume.value));
+});
+muteButton.addEventListener("click", () => {
+  const volume = Number(soundVolume.value);
+  setSoundVolume(volume <= 0 ? lastAudibleVolume : 0);
+});
 menuButton?.addEventListener("click", () => setMenuOpen(true));
 closeMenuButton?.addEventListener("click", () => setMenuOpen(false));
 menuScrim?.addEventListener("click", () => setMenuOpen(false));
@@ -540,3 +623,5 @@ if (!isCameraContextAvailable()) {
     "画面は確認できますが、file:// ではカメラを利用できません。npm run dev または npm run preview を使ってください。",
   );
 }
+
+loadSoundSettings();

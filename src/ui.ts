@@ -133,10 +133,16 @@ function settingsPanel() {
           <option value="5000">5秒</option>
         </select>
       </label>
-      <label class="setting-row">
-        <span><b>通知音</b><small>一旦は電子音でお知らせ</small></span>
-        <button class="sound-button" id="sound-button" aria-label="通知音を試す">試す ♪</button>
-      </label>
+      <div class="setting-row sound-setting">
+        <span><b>通知音</b><small>電子音でお知らせ</small></span>
+        <div class="sound-controls">
+          <div class="sound-volume">
+            <button class="sound-button mute-button" id="mute-button" type="button" aria-pressed="false" aria-label="通知音をミュート">ミュート</button>
+            <input id="sound-volume" type="range" min="0" max="100" step="5" value="50" aria-label="通知音の音量">
+          </div>
+          <button class="sound-button sound-test-button" id="sound-button" type="button" aria-label="通知音を試す">試す ♪</button>
+        </div>
+      </div>
     </div>
   `;
 }
