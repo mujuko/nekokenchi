@@ -20,8 +20,9 @@ const SOUND_OPTIONS = [
 
 type SoundOption = (typeof SOUND_OPTIONS)[number];
 type SoundChoiceId = SoundOption["id"];
+type MessagesProvider = () => Messages;
 
-export function createSoundController(elements: AppElements, t: Messages) {
+export function createSoundController(elements: AppElements, getMessages: MessagesProvider) {
   let audio: AudioContext | null = null;
   let lastAudibleVolume = DEFAULT_SOUND_VOLUME;
   const audioBuffers = new Map<string, AudioBuffer>();
@@ -71,6 +72,7 @@ export function createSoundController(elements: AppElements, t: Messages) {
   }
 
   function updateControls() {
+    const t = getMessages();
     const volume = Number(elements.soundVolume.value);
     const muted = volume <= 0;
 
@@ -245,6 +247,7 @@ export function createSoundController(elements: AppElements, t: Messages) {
     flashAlert,
     loadSettings,
     playAlert,
+    updateControls,
     unlock,
   };
 }

@@ -6,11 +6,12 @@ const CALIBRATION_SAMPLE_MS = 3000;
 const CALIBRATION_TRANSITION_MS = 2500;
 
 type CalibrationStep = "good" | "transition" | "bad";
+type MessagesProvider = () => Messages;
 
 export function createCalibrationController(
   elements: AppElements,
   onCalibrated: (state: PostureState) => void,
-  t: Messages,
+  getMessages: MessagesProvider,
 ) {
   let calibrating = false;
   let step: CalibrationStep | null = null;
@@ -19,6 +20,7 @@ export function createCalibrationController(
   let calibratedGoodY: number | null = null;
 
   function begin() {
+    const t = getMessages();
     calibrating = true;
     step = "good";
     startedAt = performance.now();
@@ -39,6 +41,7 @@ export function createCalibrationController(
   }
 
   function handleSample(noseY: number, now: number) {
+    const t = getMessages();
     const elapsed = now - startedAt;
 
     if (step === "transition") {
@@ -97,10 +100,28 @@ export function createCalibrationController(
     return calibrating;
   }
 
+  function refreshLocale() {
+    if (!calibrating) return;
+
+    const t = getMessages();
+    elements.statusLabel.textContent = t.calibration.status;
+    if (step === "good") {
+      elements.calibrationTitle.textContent = t.calibration.goodTitle;
+      elements.calibrationHelp.textContent = t.calibration.goodHelp;
+    } else if (step === "transition") {
+      elements.calibrationTitle.textContent = t.calibration.transitionTitle;
+      elements.calibrationHelp.textContent = t.calibration.transitionHelp;
+    } else if (step === "bad") {
+      elements.calibrationTitle.textContent = t.calibration.badTitle;
+      elements.calibrationHelp.textContent = t.calibration.badHelp;
+    }
+  }
+
   return {
     begin,
     handleSample,
     isCalibrating,
+    refreshLocale,
     reset,
   };
 }

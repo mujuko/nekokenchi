@@ -15,11 +15,13 @@ import { createLandmarker } from "./poseLandmarker";
 import type { SoundController } from "./sound";
 import type { StatusView } from "./statusView";
 
+type MessagesProvider = () => Messages;
+
 export function createPostureWatcher(
   elements: AppElements,
   statusView: StatusView,
   sound: SoundController,
-  t: Messages,
+  getMessages: MessagesProvider,
 ) {
   const BACKGROUND_PREDICTION_INTERVAL_MS = 125;
 
@@ -32,45 +34,47 @@ export function createPostureWatcher(
   let postureState: PostureState = createEmptyPostureState();
 
   const overlay = createOverlay(elements, () => postureState);
-  const desktopNotifier = createDesktopNotifier(t);
+  const desktopNotifier = createDesktopNotifier(getMessages);
   const calibration = createCalibrationController(
     elements,
     (state) => {
       postureState = state;
     },
-    t,
+    getMessages,
   );
 
   async function startCamera() {
+    const startupMessages = getMessages();
     void sound.unlock();
     void desktopNotifier.requestPermission();
 
     if (!isCameraContextAvailable()) {
-      showStartupError(t.camera.fileUnavailable);
+      showStartupError(startupMessages.camera.fileUnavailable);
       return;
     }
 
     elements.startButton.disabled = true;
-    statusView.setStartButtonLabel(t.camera.waitingPermission);
+    statusView.setStartButtonLabel(startupMessages.camera.waitingPermission);
 
     try {
-      const mediaStream = await getCameraStream(t);
+      const mediaStream = await getCameraStream(getMessages());
       stream = mediaStream;
 
       if (!poseLandmarker) {
-        statusView.setStartButtonLabel(t.camera.loadingModel);
-        statusView.setMetricMessage(t.camera.loadingModelMessage);
-        poseLandmarker = await createLandmarker(t);
+        const loadingMessages = getMessages();
+        statusView.setStartButtonLabel(loadingMessages.camera.loadingModel);
+        statusView.setMetricMessage(loadingMessages.camera.loadingModelMessage);
+        poseLandmarker = await createLandmarker(loadingMessages);
       }
 
       elements.video.srcObject = stream;
-      await playVideo(elements.video, t);
+      await playVideo(elements.video, getMessages());
 
       elements.placeholder.hidden = true;
       elements.video.classList.add("visible");
       elements.statusPill.hidden = false;
       elements.calibrateButton.disabled = false;
-      statusView.setStartButtonLabel(t.camera.stop);
+      statusView.setStartButtonLabel(getMessages().camera.stop);
       elements.startButton.disabled = false;
       elements.startButton.classList.add("stop");
       elements.startButton.onclick = stopCamera;
@@ -81,7 +85,7 @@ export function createPostureWatcher(
       stream?.getTracks().forEach((track) => track.stop());
       stream = null;
       console.error(error);
-      showStartupError(getStartupErrorMessage(error, t));
+      showStartupError(getStartupErrorMessage(error, getMessages()));
     }
   }
 
@@ -96,7 +100,7 @@ export function createPostureWatcher(
     elements.statusPill.hidden = true;
     elements.calibrationOverlay.hidden = true;
     elements.calibrateButton.disabled = true;
-    statusView.setStartButtonLabel(t.camera.start);
+    statusView.setStartButtonLabel(getMessages().camera.start);
     elements.startButton.classList.remove("stop");
     elements.startButton.onclick = startCamera;
     calibration.reset();
@@ -149,7 +153,7 @@ export function createPostureWatcher(
         overlay.drawPose(landmarks);
 
         if (!landmarks) {
-          elements.statusLabel.textContent = t.camera.lookingForPerson;
+          elements.statusLabel.textContent = getMessages().camera.lookingForPerson;
           statusView.updateStatus("missing", 0, 0);
           return;
         }
@@ -190,6 +194,7 @@ export function createPostureWatcher(
   }
 
   function showStartupError(message: string) {
+    const t = getMessages();
     elements.startButton.disabled = false;
     statusView.setStartButtonLabel(t.camera.retry);
     statusView.setMetricMessage(message);
@@ -200,8 +205,30 @@ export function createPostureWatcher(
     if (isCameraContextAvailable()) return;
 
     elements.startButton.disabled = true;
+    const t = getMessages();
     statusView.setStartButtonLabel(t.camera.localHostRequired);
     statusView.setMetricMessage(t.camera.filePreviewOnly);
+  }
+
+  function refreshLocale() {
+    const t = getMessages();
+
+    calibration.refreshLocale();
+    statusView.refreshLocale();
+
+    if (!isCameraContextAvailable()) {
+      showUnsupportedStateIfNeeded();
+      return;
+    }
+
+    if (stream) {
+      statusView.setStartButtonLabel(t.camera.stop);
+      return;
+    }
+
+    if (!elements.startButton.disabled) {
+      statusView.setStartButtonLabel(t.camera.start);
+    }
   }
 
   window.addEventListener("resize", overlay.resizeCanvas);
@@ -212,6 +239,7 @@ export function createPostureWatcher(
 
   return {
     beginCalibration: calibration.begin,
+    refreshLocale,
     showUnsupportedStateIfNeeded,
     startCamera,
   };

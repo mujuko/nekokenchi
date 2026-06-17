@@ -2,8 +2,13 @@ import type { AppElements } from "../ui";
 import type { Messages } from "../i18n";
 
 export type PostureViewStatus = "idle" | "missing" | "good" | "bad";
+type MessagesProvider = () => Messages;
 
-export function createStatusView(elements: AppElements, t: Messages) {
+export function createStatusView(elements: AppElements, getMessages: MessagesProvider) {
+  let currentStatus: PostureViewStatus = "idle";
+  let currentProgress = 0;
+  let currentBadDurationMs = 0;
+
   function setStartButtonLabel(label: string) {
     elements.startButtonLabel.textContent = label;
   }
@@ -32,6 +37,10 @@ export function createStatusView(elements: AppElements, t: Messages) {
     progress: number,
     badDurationMs: number,
   ) {
+    const t = getMessages();
+    currentStatus = status;
+    currentProgress = progress;
+    currentBadDurationMs = badDurationMs;
     setMeterProgress(progress);
 
     if (status === "good") {
@@ -58,13 +67,19 @@ export function createStatusView(elements: AppElements, t: Messages) {
     } else if (status === "missing") {
       setPostureBadge(status, t.posture.missingBadge);
       setMetricMessage(t.posture.missingMessage);
+      elements.statusLabel.textContent = t.camera.lookingForPerson;
     } else {
       setPostureBadge(status, t.posture.idleBadge);
       setMetricMessage(t.posture.idleMessage);
     }
   }
 
+  function refreshLocale() {
+    updateStatus(currentStatus, currentProgress, currentBadDurationMs);
+  }
+
   return {
+    refreshLocale,
     setStartButtonLabel,
     setMetricMessage,
     setPostureBadge,

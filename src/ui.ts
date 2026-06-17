@@ -157,6 +157,129 @@ export function renderApp(appVersion: string, t: Messages, locale: Locale) {
 
 export type AppElements = ReturnType<typeof getAppElements>;
 
+export function updateAppLocale(
+  appVersion: string,
+  elements: AppElements,
+  t: Messages,
+  locale: Locale,
+) {
+  document.documentElement.lang = locale;
+  document.title = t.meta.title;
+  document
+    .querySelector('meta[name="description"]')
+    ?.setAttribute("content", t.meta.description);
+
+  setText(".brand .brand-mark + span", t.common.brand);
+  document
+    .querySelector(".brand")
+    ?.setAttribute("aria-label", t.header.homeLabel);
+  document
+    .querySelector(".brand-version")
+    ?.setAttribute("aria-label", t.header.versionLabel(appVersion));
+  const privacy = document.querySelector(".privacy");
+  if (privacy) {
+    const dot = document.createElement("span");
+    dot.className = "privacy-dot";
+    privacy.replaceChildren(dot, t.header.privacy);
+  }
+  document
+    .querySelector(".github-button")
+    ?.setAttribute("aria-label", t.common.github);
+  document.querySelector(".github-button")?.setAttribute("title", t.common.github);
+  elements.menuButton?.setAttribute("aria-label", t.header.openMenu);
+
+  document.querySelectorAll<HTMLSelectElement>("[data-locale-select]").forEach((select) => {
+    select.value = locale;
+    const jaOption = select.querySelector<HTMLOptionElement>('option[value="ja"]');
+    const enOption = select.querySelector<HTMLOptionElement>('option[value="en"]');
+    if (jaOption) jaOption.textContent = t.common.japanese;
+    if (enOption) enOption.textContent = t.common.english;
+  });
+  document
+    .querySelectorAll<HTMLSpanElement>(".language-select > span")
+    .forEach((label) => {
+      label.textContent = t.common.language;
+    });
+
+  setText(".hero h1", "");
+  const heroTitle = document.querySelector<HTMLHeadingElement>(".hero h1");
+  if (heroTitle) {
+    heroTitle.append(t.hero.titleLine1, document.createElement("br"));
+    const emphasis = document.createElement("em");
+    emphasis.textContent = t.hero.titleEmphasis;
+    heroTitle.append(emphasis);
+  }
+  setText(".hero-copy", t.hero.copy);
+
+  setText("#camera-placeholder h2", t.camera.placeholderTitle);
+  setText("#camera-placeholder p", t.camera.placeholderCopy);
+  elements.calibrateButton.textContent = t.camera.recalibrate;
+  elements.alertFlash.textContent = t.camera.alert;
+
+  elements.mobileMenu.setAttribute("aria-label", t.settings.panelAria);
+  setText(".drawer-head h2", t.settings.menuTitle);
+  elements.closeMenuButton?.setAttribute("aria-label", t.header.closeMenu);
+  document
+    .querySelectorAll<HTMLElement>(".metric-card")
+    .forEach((card) => {
+      card.dataset.mobileTitle = t.posture.mobileTitle;
+      card.querySelector("h2")!.textContent = t.posture.title;
+      const meterLabels = card.querySelectorAll(".meter-labels span");
+      meterLabels[0].textContent = t.posture.goodMeter;
+      meterLabels[1].textContent = t.posture.badMeter;
+    });
+
+  setText(".settings-card h2", t.settings.panelTitle);
+  updateSettingRow("#sensitivity", t.settings.sensitivity, t.settings.sensitivityHelp);
+  updateSelectOption(elements.sensitivity, "0.9", t.settings.sensitivityLoose);
+  updateSelectOption(elements.sensitivity, "0.75", t.settings.sensitivityNormal);
+  updateSelectOption(elements.sensitivity, "0.6", t.settings.sensitivitySensitive);
+  updateSettingRow("#duration", t.settings.duration, t.settings.durationHelp);
+  updateSelectOption(elements.duration, "2000", t.settings.seconds(2));
+  updateSelectOption(elements.duration, "3000", t.settings.seconds(3));
+  updateSelectOption(elements.duration, "5000", t.settings.seconds(5));
+
+  const soundSetting = document.querySelector(".sound-setting");
+  soundSetting?.querySelector("b")?.replaceChildren(t.settings.sound);
+  soundSetting?.querySelector("small")?.replaceChildren(t.settings.soundHelp);
+  document
+    .querySelector(".sound-choice-list")
+    ?.setAttribute("aria-label", t.settings.soundKindLabel);
+  const soundLabels = [
+    t.settings.soundTone,
+    t.settings.soundCat(1),
+    t.settings.soundCat(2),
+    t.settings.soundCat(3),
+    t.settings.soundCat(4),
+  ];
+  elements.soundChoices.forEach((choice, index) => {
+    const label = choice.parentElement;
+    if (!label) return;
+
+    label.lastChild!.textContent = soundLabels[index];
+  });
+  elements.soundVolume.setAttribute("aria-label", t.settings.volumeLabel);
+  elements.soundButton.textContent = t.settings.testSound;
+  elements.soundButton.setAttribute("aria-label", t.settings.testSoundLabel);
+
+  const tipParagraph = document.querySelector<HTMLParagraphElement>(".tip p");
+  if (tipParagraph) {
+    tipParagraph.replaceChildren();
+    const title = document.createElement("b");
+    title.textContent = t.tip.title;
+    tipParagraph.append(title, t.tip.body);
+  }
+
+  document
+    .querySelector(".menu-links")
+    ?.setAttribute("aria-label", t.common.brand);
+  setText(".menu-links > a:first-child span", t.common.sourceCode);
+  setText(".menu-links > a:nth-child(2)", t.common.soundCredit);
+  setText(".menu-links > span:last-child", t.common.copyright);
+  setText(".app-footer span", t.common.copyright);
+  setText(".app-footer a", t.common.soundCredit);
+}
+
 export function getAppElements() {
   return {
     video: query<HTMLVideoElement>("#video"),
@@ -189,6 +312,24 @@ export function getAppElements() {
     mobileMenu: query<HTMLElement>("#mobile-menu"),
     localeSelects: queryAll<HTMLSelectElement>("[data-locale-select]"),
   };
+}
+
+function setText(selector: string, text: string) {
+  const element = document.querySelector(selector);
+  if (element) element.textContent = text;
+}
+
+function updateSettingRow(selectSelector: string, title: string, help: string) {
+  const row = document.querySelector(selectSelector)?.closest(".setting-row");
+  row?.querySelector("b")?.replaceChildren(title);
+  row?.querySelector("small")?.replaceChildren(help);
+}
+
+function updateSelectOption(select: HTMLSelectElement, value: string, text: string) {
+  const option = select.querySelector<HTMLOptionElement>(
+    `option[value="${value}"]`,
+  );
+  if (option) option.textContent = text;
 }
 
 function query<T extends Element>(selector: string): T {

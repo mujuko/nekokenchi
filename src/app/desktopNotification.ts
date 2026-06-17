@@ -1,8 +1,9 @@
 import type { Messages } from "../i18n";
 
 const AUTO_CLOSE_MS = 10_000;
+type MessagesProvider = () => Messages;
 
-export function createDesktopNotifier(t: Messages) {
+export function createDesktopNotifier(getMessages: MessagesProvider) {
   async function requestPermission() {
     if (!isNotificationSupported()) return;
     if (Notification.permission !== "default") return;
@@ -15,6 +16,7 @@ export function createDesktopNotifier(t: Messages) {
     if (!isNotificationSupported()) return;
     if (Notification.permission !== "granted") return;
 
+    const t = getMessages();
     const notification = new Notification(t.notification.title, {
       body: t.notification.body,
     });
