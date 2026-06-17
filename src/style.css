@@ -936,7 +936,11 @@ select,
     bottom: 10px;
     left: 10px;
     z-index: 2;
-    display: block !important;
+    display: grid !important;
+    grid-template-columns: minmax(0, 1fr) auto;
+    align-items: center;
+    column-gap: 12px;
+    row-gap: 0;
     padding: 12px;
     background: rgba(255, 253, 248, 0.88);
     border-color: rgba(255, 255, 255, 0.55);
@@ -952,22 +956,28 @@ select,
   }
 
   .mobile-posture .metric-heading {
-    margin-bottom: 8px;
+    display: contents;
   }
 
   .mobile-posture .metric-heading::before {
-    content: attr(data-mobile-title);
-    color: var(--ink);
-    font-size: 13px;
-    font-weight: 800;
+    content: none;
   }
 
   .mobile-posture .meter {
+    grid-column: 1;
+    grid-row: 1;
     margin-top: 0;
   }
 
+  .mobile-posture .posture-badge {
+    grid-column: 2;
+    grid-row: 1;
+    justify-self: end;
+    white-space: nowrap;
+  }
+
   .posture-badge {
-    padding: 6px 9px;
+    padding: 4px 9px;
   }
 
   .calibration-overlay strong {
