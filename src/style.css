@@ -139,6 +139,38 @@ button {
   box-shadow: 0 0 0 4px rgba(111, 140, 119, 0.13);
 }
 
+.topbar-actions {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.github-button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 34px;
+  height: 34px;
+  color: rgba(49, 46, 41, 0.58);
+  background: rgba(255, 253, 248, 0.46);
+  border: 1px solid rgba(49, 46, 41, 0.12);
+  border-radius: 7px;
+  text-decoration: none;
+  transition: color 0.2s ease, background 0.2s ease, border-color 0.2s ease;
+}
+
+.github-button:hover {
+  color: var(--ink);
+  background: rgba(255, 253, 248, 0.76);
+  border-color: rgba(49, 46, 41, 0.2);
+}
+
+.github-icon {
+  width: 18px;
+  height: 18px;
+  fill: currentColor;
+}
+
 .hero {
   display: grid;
   grid-template-columns: 1.25fr 0.75fr;
@@ -193,12 +225,15 @@ button {
 }
 
 .camera-card {
+  display: flex;
+  flex-direction: column;
   padding: 14px;
   border-radius: 24px;
 }
 
 .camera-stage {
   position: relative;
+  flex: 1 1 auto;
   min-height: 480px;
   overflow: hidden;
   border-radius: 16px;
@@ -330,6 +365,10 @@ video.visible {
 }
 
 .button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 9px;
   min-height: 50px;
   padding: 0 22px;
   border-radius: 12px;
@@ -364,25 +403,15 @@ video.visible {
   background: #eee9df;
 }
 
-.camera-icon {
-  display: inline-block;
-  width: 17px;
-  height: 12px;
-  margin-right: 8px;
-  vertical-align: -1px;
-  border: 2px solid currentColor;
-  border-radius: 3px;
-}
-
-.camera-icon::after {
-  content: "";
-  display: block;
-  width: 5px;
-  height: 7px;
-  margin: 0 0 0 13px;
-  border: 2px solid currentColor;
-  border-left: 0;
-  transform: translateY(1px);
+.button-icon {
+  flex: 0 0 auto;
+  width: 20px;
+  height: 20px;
+  fill: none;
+  stroke: currentColor;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+  stroke-width: 2;
 }
 
 .calibration-overlay {
@@ -649,6 +678,17 @@ select,
   display: block;
   color: var(--ink);
   font-size: 12px;
+}
+
+.app-footer {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 18px;
+  padding: 34px 0 0;
+  color: var(--muted);
+  font-size: 12px;
+  font-weight: 700;
 }
 
 @media (max-width: 900px) {

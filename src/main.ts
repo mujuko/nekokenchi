@@ -29,7 +29,14 @@ document.querySelector<HTMLDivElement>("#app")!.innerHTML = `
         <span>ねこ検知</span>
         <span class="brand-version" aria-label="バージョン ${APP_VERSION}">${APP_VERSION}</span>
       </a>
-      <div class="privacy"><span class="privacy-dot"></span>映像は端末内だけで処理</div>
+      <div class="topbar-actions">
+        <a class="github-button" href="https://github.com/mujuko/nekokenchi" target="_blank" rel="noreferrer" aria-label="GitHub" title="GitHub">
+          <svg class="github-icon" aria-hidden="true" viewBox="0 0 24 24">
+            <path d="M12 .8a11.2 11.2 0 0 0-3.54 21.83c.56.1.77-.24.77-.54v-2.07c-3.13.68-3.8-1.34-3.8-1.34-.51-1.3-1.25-1.65-1.25-1.65-1.02-.7.08-.68.08-.68 1.13.08 1.73 1.16 1.73 1.16 1 .1 2.64-.89 3.28-.68.1-.73.4-1.23.72-1.52-2.5-.28-5.13-1.25-5.13-5.57 0-1.23.44-2.24 1.16-3.03-.12-.28-.5-1.43.11-2.99 0 0 .95-.3 3.1 1.16a10.7 10.7 0 0 1 5.64 0c2.15-1.46 3.1-1.16 3.1-1.16.61 1.56.23 2.71.11 2.99.72.79 1.16 1.8 1.16 3.03 0 4.33-2.63 5.28-5.14 5.56.41.35.77 1.04.77 2.09v3.1c0 .3.2.65.78.54A11.2 11.2 0 0 0 12 .8Z"></path>
+          </svg>
+        </a>
+        <div class="privacy"><span class="privacy-dot"></span>映像は端末内だけで処理</div>
+      </div>
     </header>
 
     <section class="hero">
@@ -64,8 +71,11 @@ document.querySelector<HTMLDivElement>("#app")!.innerHTML = `
         </div>
         <div class="camera-actions">
           <button class="button primary" id="start-button">
-            <span class="camera-icon" aria-hidden="true"></span>
-            カメラを起動
+            <svg class="button-icon camera-icon" aria-hidden="true" viewBox="0 0 24 24">
+              <path d="M14.5 4.5 16.2 7H20a2 2 0 0 1 2 2v8.5a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V9a2 2 0 0 1 2-2h3.8l1.7-2.5h5Z"></path>
+              <circle cx="12" cy="13" r="4"></circle>
+            </svg>
+            <span id="start-button-label">カメラを起動</span>
           </button>
           <button class="button secondary" id="calibrate-button" disabled>姿勢を登録しなおす</button>
         </div>
@@ -118,6 +128,10 @@ document.querySelector<HTMLDivElement>("#app")!.innerHTML = `
         </div>
       </aside>
     </section>
+
+    <footer class="app-footer">
+      <span>© 第一無重工</span>
+    </footer>
   </main>
 `;
 
@@ -133,6 +147,8 @@ const calibrationTitle =
 const calibrationHelp =
   document.querySelector<HTMLElement>("#calibration-help")!;
 const startButton = document.querySelector<HTMLButtonElement>("#start-button")!;
+const startButtonLabel =
+  document.querySelector<HTMLSpanElement>("#start-button-label")!;
 const calibrateButton =
   document.querySelector<HTMLButtonElement>("#calibrate-button")!;
 const statusPill = document.querySelector<HTMLDivElement>("#status-pill")!;
@@ -162,6 +178,10 @@ let postureState: PostureState = {
   badSince: null,
   lastAlertAt: null,
 };
+
+function setStartButtonLabel(label: string) {
+  startButtonLabel.textContent = label;
+}
 
 async function createLandmarker() {
   return withTimeout(
@@ -193,14 +213,14 @@ async function startCamera() {
   }
 
   startButton.disabled = true;
-  startButton.textContent = "カメラの許可を待っています…";
+  setStartButtonLabel("カメラの許可を待っています…");
 
   try {
     const mediaStream = await getCameraStream();
     stream = mediaStream;
 
     if (!poseLandmarker) {
-      startButton.textContent = "姿勢モデルを読み込んでいます…";
+      setStartButtonLabel("姿勢モデルを読み込んでいます…");
       metricMessage.textContent =
         "初回だけ姿勢モデルを読み込みます。しばらくお待ちください。";
       poseLandmarker = await createLandmarker();
@@ -217,7 +237,7 @@ async function startCamera() {
     video.classList.add("visible");
     statusPill.hidden = false;
     calibrateButton.disabled = false;
-    startButton.textContent = "カメラを停止";
+    setStartButtonLabel("カメラを停止");
     startButton.disabled = false;
     startButton.classList.add("stop");
     startButton.onclick = stopCamera;
@@ -294,7 +314,7 @@ function getStartupErrorMessage(error: unknown): string {
 
 function showStartupError(message: string) {
   startButton.disabled = false;
-  startButton.textContent = "もう一度試す";
+  setStartButtonLabel("もう一度試す");
   metricMessage.textContent = message;
   postureBadge.textContent = "起動エラー";
   postureBadge.className = "posture-badge bad";
@@ -331,7 +351,7 @@ function stopCamera() {
   statusPill.hidden = true;
   calibrationOverlay.hidden = true;
   calibrateButton.disabled = true;
-  startButton.textContent = "カメラを起動";
+  setStartButtonLabel("カメラを起動");
   startButton.classList.remove("stop");
   startButton.onclick = startCamera;
   calibrating = false;
@@ -595,7 +615,7 @@ window.addEventListener("resize", resizeCanvas);
 
 if (!isCameraContextAvailable()) {
   startButton.disabled = true;
-  startButton.textContent = "localhost で起動してください";
+  setStartButtonLabel("localhost で起動してください");
   metricMessage.textContent =
     "画面は確認できますが、file:// ではカメラを利用できません。npm run dev または npm run preview を使ってください。";
 }
