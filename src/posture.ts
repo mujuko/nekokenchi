@@ -56,7 +56,9 @@ export function evaluatePosture(
       goodY: previous.goodY,
       badY: previous.badY,
       badSince,
-      lastAlertAt: shouldAlert ? now : previous.lastAlertAt,
+      lastAlertAt: isBad
+        ? (shouldAlert ? now : previous.lastAlertAt)
+        : null,
     },
     drop,
     score,

@@ -48,6 +48,19 @@ describe("evaluatePosture", () => {
     expect(result.state.badSince).toBeNull();
   });
 
+  it("resets the alert cooldown when posture recovers", () => {
+    const state: PostureState = {
+      goodY: 0.3,
+      badY: 0.4,
+      badSince: 1000,
+      lastAlertAt: 4000,
+    };
+    const result = evaluatePosture(0.32, 5000, state, settings);
+
+    expect(result.isBad).toBe(false);
+    expect(result.state.lastAlertAt).toBeNull();
+  });
+
   it("respects the alert cooldown", () => {
     const state: PostureState = {
       goodY: 0.3,
