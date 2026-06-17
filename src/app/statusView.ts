@@ -1,8 +1,9 @@
 import type { AppElements } from "../ui";
+import type { Messages } from "../i18n";
 
 export type PostureViewStatus = "idle" | "missing" | "good" | "bad";
 
-export function createStatusView(elements: AppElements) {
+export function createStatusView(elements: AppElements, t: Messages) {
   function setStartButtonLabel(label: string) {
     elements.startButtonLabel.textContent = label;
   }
@@ -34,29 +35,32 @@ export function createStatusView(elements: AppElements) {
     setMeterProgress(progress);
 
     if (status === "good") {
-      setPostureBadge(status, "いい姿勢");
-      setMetricMessage("きれいな姿勢です。その調子でいきましょう。");
-      elements.statusLabel.textContent = "見守り中";
+      setPostureBadge(status, t.posture.goodBadge);
+      setMetricMessage(t.posture.goodMessage);
+      elements.statusLabel.textContent = t.calibration.watching;
       elements.statusPill.className = "status-pill";
     } else if (status === "bad") {
       const remaining = Math.max(
         0,
         Math.ceil((Number(elements.duration.value) - badDurationMs) / 1000),
       );
-      setPostureBadge(status, remaining > 0 ? `あと ${remaining}秒` : "猫背を検知");
+      setPostureBadge(
+        status,
+        remaining > 0 ? t.posture.badCountdown(remaining) : t.posture.badBadge,
+      );
       setMetricMessage(
         remaining > 0
-          ? "頭の位置が少し下がっています。背すじを意識してみましょう。"
-          : "姿勢が丸まっています。肩の力を抜いて、背すじを伸ばしましょう。",
+          ? t.posture.badMessageWarning
+          : t.posture.badMessageAlert,
       );
-      elements.statusLabel.textContent = "姿勢が低下";
+      elements.statusLabel.textContent = t.posture.badStatus;
       elements.statusPill.className = "status-pill warning";
     } else if (status === "missing") {
-      setPostureBadge(status, "検出待ち");
-      setMetricMessage("顔と肩がカメラに映る位置へ移動してください。");
+      setPostureBadge(status, t.posture.missingBadge);
+      setMetricMessage(t.posture.missingMessage);
     } else {
-      setPostureBadge(status, "待機中");
-      setMetricMessage("カメラを起動すると、ここに姿勢の状態が表示されます。");
+      setPostureBadge(status, t.posture.idleBadge);
+      setMetricMessage(t.posture.idleMessage);
     }
   }
 

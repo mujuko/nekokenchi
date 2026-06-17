@@ -1,32 +1,34 @@
-export function renderApp(appVersion: string) {
+import type { Locale, Messages } from "./i18n";
+
+export function renderApp(appVersion: string, t: Messages, locale: Locale) {
   return `
     <main class="app-shell">
       <header class="topbar">
-        <a class="brand" href="#" aria-label="ねこ検知 ホーム">
+        <a class="brand" href="#" aria-label="${t.header.homeLabel}">
           <span class="brand-mark" aria-hidden="true">
             <span class="ear ear-left"></span><span class="ear ear-right"></span>
             <span class="face-dot face-dot-left"></span><span class="face-dot face-dot-right"></span>
           </span>
-          <span>ねこ検知</span>
-          <span class="brand-version" aria-label="バージョン ${appVersion}">${appVersion}</span>
+          <span>${t.common.brand}</span>
+          <span class="brand-version" aria-label="${t.header.versionLabel(appVersion)}">${appVersion}</span>
         </a>
         <div class="topbar-actions desktop-only">
-          <a class="github-button" href="https://github.com/mujuko/nekokenchi" target="_blank" rel="noreferrer" aria-label="GitHub" title="GitHub">
+          ${languageSelect(t, locale, "desktop")}
+          <a class="github-button" href="https://github.com/mujuko/nekokenchi" target="_blank" rel="noreferrer" aria-label="${t.common.github}" title="${t.common.github}">
             ${githubIcon()}
           </a>
-          <div class="privacy"><span class="privacy-dot"></span>映像は端末内だけで処理</div>
+          <div class="privacy"><span class="privacy-dot"></span>${t.header.privacy}</div>
         </div>
-        <button class="menu-button mobile-only" id="menu-button" type="button" aria-label="メニューを開く" aria-controls="mobile-menu" aria-expanded="false">
+        <button class="menu-button mobile-only" id="menu-button" type="button" aria-label="${t.header.openMenu}" aria-controls="mobile-menu" aria-expanded="false">
           <span></span><span></span><span></span>
         </button>
       </header>
 
       <section class="hero desktop-only">
         <div>
-          <p class="eyebrow">POSTURE WATCHER</p>
-          <h1>背すじが丸まったら、<br><em>そっとお知らせ。</em></h1>
+          <h1>${t.hero.titleLine1}<br><em>${t.hero.titleEmphasis}</em></h1>
         </div>
-        <p class="hero-copy">カメラで頭の高さを見守り、猫背が続いたときだけ音で知らせます。まずは正面から、目線に近い高さで映してください。</p>
+        <p class="hero-copy">${t.hero.copy}</p>
       </section>
 
       <section class="workspace">
@@ -38,19 +40,19 @@ export function renderApp(appVersion: string) {
               <div class="cat-orbit">
                 <div class="cat-head"><i></i><i></i><b></b><span></span></div>
               </div>
-              <h2>カメラを起動しましょう</h2>
-              <p>姿勢の判定はこの端末内で行われます</p>
+              <h2>${t.camera.placeholderTitle}</h2>
+              <p>${t.camera.placeholderCopy}</p>
             </div>
             <div class="calibration-overlay" id="calibration-overlay" hidden>
               <div class="countdown-ring"><span id="countdown">3</span></div>
-              <strong id="calibration-title">背すじを伸ばして、そのまま</strong>
-              <small id="calibration-help">良い姿勢の頭の高さを覚えています</small>
+              <strong id="calibration-title">${t.calibration.goodTitle}</strong>
+              <small id="calibration-help">${t.calibration.goodHelp}</small>
             </div>
             <div class="status-pill" id="status-pill" hidden>
-              <span></span><b id="status-label">計測中</b>
+              <span></span><b id="status-label">${t.camera.statusMeasuring}</b>
             </div>
             ${posturePanel("mobile-posture", true)}
-            <div class="alert-flash" id="alert-flash" hidden>背すじを伸ばそう</div>
+            <div class="alert-flash" id="alert-flash" hidden>${t.camera.alert}</div>
           </div>
           <div class="camera-actions">
             <button class="button primary" id="start-button">
@@ -58,41 +60,99 @@ export function renderApp(appVersion: string) {
                 <path d="M14.5 4.5 16.2 7H20a2 2 0 0 1 2 2v8.5a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V9a2 2 0 0 1 2-2h3.8l1.7-2.5h5Z"></path>
                 <circle cx="12" cy="13" r="4"></circle>
               </svg>
-              <span id="start-button-label">カメラを起動</span>
+              <span id="start-button-label">${t.camera.start}</span>
             </button>
-            <button class="button secondary" id="calibrate-button" disabled>姿勢を登録しなおす</button>
+            <button class="button secondary" id="calibrate-button" disabled>${t.camera.recalibrate}</button>
           </div>
         </div>
 
         <div class="menu-scrim mobile-only" id="menu-scrim" hidden></div>
-        <aside class="side-panel" id="mobile-menu" aria-label="見守り設定">
+        <aside class="side-panel" id="mobile-menu" aria-label="${t.settings.panelAria}">
           <div class="drawer-head mobile-only">
             <div>
-              <span class="section-label">MENU</span>
-              <h2>設定</h2>
+              <h2>${t.settings.menuTitle}</h2>
             </div>
-            <button class="close-button" id="close-menu-button" type="button" aria-label="メニューを閉じる">×</button>
+            <button class="close-button" id="close-menu-button" type="button" aria-label="${t.header.closeMenu}">×</button>
           </div>
+          <div class="mobile-only">${languageSelect(t, locale, "mobile")}</div>
           ${posturePanel("desktop-posture", false)}
           ${settingsPanel()}
           <div class="tip">
             <span class="tip-icon">i</span>
-            <p><b>うまく測るコツ</b>顔と肩が正面から映る距離で、極端な見下ろしや見上げの画角を避けると安定します。</p>
+            <p><b>${t.tip.title}</b>${t.tip.body}</p>
           </div>
-          <nav class="menu-links mobile-only" aria-label="アプリ情報">
-            <a href="https://github.com/mujuko/nekokenchi" target="_blank" rel="noreferrer">${githubIcon()}<span>ソースコード</span></a>
-            <a href="https://pocket-se.info/" target="_blank" rel="noreferrer">効果音: ポケットサウンド</a>
-            <span>© 第一無重工</span>
+          <nav class="menu-links mobile-only" aria-label="${t.common.brand}">
+            <a href="https://github.com/mujuko/nekokenchi" target="_blank" rel="noreferrer">${githubIcon()}<span>${t.common.sourceCode}</span></a>
+            <a href="https://pocket-se.info/" target="_blank" rel="noreferrer">${t.common.soundCredit}</a>
+            <span>${t.common.copyright}</span>
           </nav>
         </aside>
       </section>
 
       <footer class="app-footer desktop-only">
-        <span>© 第一無重工</span>
-        <a href="https://pocket-se.info/" target="_blank" rel="noreferrer">効果音: ポケットサウンド</a>
+        <span>${t.common.copyright}</span>
+        <a href="https://pocket-se.info/" target="_blank" rel="noreferrer">${t.common.soundCredit}</a>
       </footer>
     </main>
   `;
+  function posturePanel(extraClass: string, mobile: boolean) {
+    return `
+      <div class="metric-card ${extraClass} ${mobile ? "mobile-only" : "desktop-metric"}" data-mobile-title="${t.posture.mobileTitle}">
+        <div class="metric-heading">
+          <div>
+            <h2>${t.posture.title}</h2>
+          </div>
+          <div class="posture-badge idle" data-posture-badge>${t.posture.idleBadge}</div>
+        </div>
+        <div class="meter">
+          <div class="meter-track"><div class="meter-fill" data-meter-fill></div></div>
+          <div class="meter-labels"><span>${t.posture.goodMeter}</span><span>${t.posture.badMeter}</span></div>
+        </div>
+        <p class="metric-message" data-metric-message>${t.posture.idleMessage}</p>
+      </div>
+    `;
+  }
+
+  function settingsPanel() {
+    return `
+      <div class="settings-card">
+        <h2>${t.settings.panelTitle}</h2>
+        <label class="setting-row">
+          <span><b>${t.settings.sensitivity}</b><small>${t.settings.sensitivityHelp}</small></span>
+          <select id="sensitivity">
+            <option value="0.9">${t.settings.sensitivityLoose}</option>
+            <option value="0.75" selected>${t.settings.sensitivityNormal}</option>
+            <option value="0.6">${t.settings.sensitivitySensitive}</option>
+          </select>
+        </label>
+        <label class="setting-row">
+          <span><b>${t.settings.duration}</b><small>${t.settings.durationHelp}</small></span>
+          <select id="duration">
+            <option value="2000">${t.settings.seconds(2)}</option>
+            <option value="3000" selected>${t.settings.seconds(3)}</option>
+            <option value="5000">${t.settings.seconds(5)}</option>
+          </select>
+        </label>
+        <div class="setting-row sound-setting">
+          <span><b>${t.settings.sound}</b><small>${t.settings.soundHelp}</small></span>
+          <div class="sound-controls">
+            <div class="sound-choice-list" aria-label="${t.settings.soundKindLabel}">
+              <label><input type="checkbox" value="tone" data-sound-choice checked>${t.settings.soundTone}</label>
+              <label><input type="checkbox" value="cat10" data-sound-choice>${t.settings.soundCat(1)}</label>
+              <label><input type="checkbox" value="cat11" data-sound-choice>${t.settings.soundCat(2)}</label>
+              <label><input type="checkbox" value="cat15" data-sound-choice>${t.settings.soundCat(3)}</label>
+              <label><input type="checkbox" value="cat30" data-sound-choice>${t.settings.soundCat(4)}</label>
+            </div>
+            <div class="sound-volume">
+              <button class="sound-button mute-button" id="mute-button" type="button" aria-pressed="false" aria-label="${t.settings.muteLabel}">${t.settings.mute}</button>
+              <input id="sound-volume" type="range" min="0" max="100" step="5" value="50" aria-label="${t.settings.volumeLabel}">
+            </div>
+            <button class="sound-button sound-test-button" id="sound-button" type="button" aria-label="${t.settings.testSoundLabel}">${t.settings.testSound}</button>
+          </div>
+        </div>
+      </div>
+    `;
+  }
 }
 
 export type AppElements = ReturnType<typeof getAppElements>;
@@ -127,6 +187,7 @@ export function getAppElements() {
       document.querySelector<HTMLButtonElement>("#close-menu-button"),
     menuScrim: document.querySelector<HTMLDivElement>("#menu-scrim"),
     mobileMenu: query<HTMLElement>("#mobile-menu"),
+    localeSelects: queryAll<HTMLSelectElement>("[data-locale-select]"),
   };
 }
 
@@ -138,64 +199,15 @@ function queryAll<T extends Element>(selector: string): NodeListOf<T> {
   return document.querySelectorAll<T>(selector);
 }
 
-function posturePanel(extraClass: string, mobile: boolean) {
+function languageSelect(t: Messages, locale: Locale, placement: string) {
   return `
-    <div class="metric-card ${extraClass} ${mobile ? "mobile-only" : "desktop-metric"}">
-      <div class="metric-heading">
-        <div>
-          <span class="section-label">NOW</span>
-          <h2>いまの姿勢</h2>
-        </div>
-        <div class="posture-badge idle" data-posture-badge>待機中</div>
-      </div>
-      <div class="meter">
-        <div class="meter-track"><div class="meter-fill" data-meter-fill></div></div>
-        <div class="meter-labels"><span>GOOD</span><span>ROUND</span></div>
-      </div>
-      <p class="metric-message" data-metric-message>カメラを起動すると、ここに姿勢の状態が表示されます。</p>
-    </div>
-  `;
-}
-
-function settingsPanel() {
-  return `
-    <div class="settings-card">
-      <span class="section-label">SENSITIVITY</span>
-      <h2>見守り設定</h2>
-      <label class="setting-row">
-        <span><b>感度</b><small>頭がどれくらい下がったら検知するか</small></span>
-        <select id="sensitivity">
-          <option value="0.9">ゆるめ</option>
-          <option value="0.75" selected>ふつう</option>
-          <option value="0.6">敏感</option>
-        </select>
-      </label>
-      <label class="setting-row">
-        <span><b>お知らせまで</b><small>悪い姿勢が続く時間</small></span>
-        <select id="duration">
-          <option value="2000">2秒</option>
-          <option value="3000" selected>3秒</option>
-          <option value="5000">5秒</option>
-        </select>
-      </label>
-      <div class="setting-row sound-setting">
-        <span><b>通知音</b><small>複数選ぶとランダムに再生</small></span>
-        <div class="sound-controls">
-          <div class="sound-choice-list" aria-label="通知音の種類">
-            <label><input type="checkbox" value="tone" data-sound-choice checked>電子音</label>
-            <label><input type="checkbox" value="cat10" data-sound-choice>ねこ 1</label>
-            <label><input type="checkbox" value="cat11" data-sound-choice>ねこ 2</label>
-            <label><input type="checkbox" value="cat15" data-sound-choice>ねこ 3</label>
-            <label><input type="checkbox" value="cat30" data-sound-choice>ねこ 4</label>
-          </div>
-          <div class="sound-volume">
-            <button class="sound-button mute-button" id="mute-button" type="button" aria-pressed="false" aria-label="通知音をミュート">ミュート</button>
-            <input id="sound-volume" type="range" min="0" max="100" step="5" value="50" aria-label="通知音の音量">
-          </div>
-          <button class="sound-button sound-test-button" id="sound-button" type="button" aria-label="通知音を試す">試す ♪</button>
-        </div>
-      </div>
-    </div>
+    <label class="language-select language-select-${placement}">
+      <span>${t.common.language}</span>
+      <select data-locale-select>
+        <option value="ja"${locale === "ja" ? " selected" : ""}>${t.common.japanese}</option>
+        <option value="en"${locale === "en" ? " selected" : ""}>${t.common.english}</option>
+      </select>
+    </label>
   `;
 }
 

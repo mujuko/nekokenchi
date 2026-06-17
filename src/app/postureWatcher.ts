@@ -1,6 +1,7 @@
 import type { PoseLandmarker } from "@mediapipe/tasks-vision";
 import { evaluatePosture, type PostureState } from "../posture";
 import type { AppElements } from "../ui";
+import type { Messages } from "../i18n";
 import {
   getCameraStream,
   getStartupErrorMessage,
@@ -18,6 +19,7 @@ export function createPostureWatcher(
   elements: AppElements,
   statusView: StatusView,
   sound: SoundController,
+  t: Messages,
 ) {
   const BACKGROUND_PREDICTION_INTERVAL_MS = 125;
 
@@ -30,12 +32,13 @@ export function createPostureWatcher(
   let postureState: PostureState = createEmptyPostureState();
 
   const overlay = createOverlay(elements, () => postureState);
-  const desktopNotifier = createDesktopNotifier();
+  const desktopNotifier = createDesktopNotifier(t);
   const calibration = createCalibrationController(
     elements,
     (state) => {
       postureState = state;
     },
+    t,
   );
 
   async function startCamera() {
@@ -43,35 +46,31 @@ export function createPostureWatcher(
     void desktopNotifier.requestPermission();
 
     if (!isCameraContextAvailable()) {
-      showStartupError(
-        "カメラは file:// では利用できません。npm run dev または npm run preview で開いてください。",
-      );
+      showStartupError(t.camera.fileUnavailable);
       return;
     }
 
     elements.startButton.disabled = true;
-    statusView.setStartButtonLabel("カメラの許可を待っています…");
+    statusView.setStartButtonLabel(t.camera.waitingPermission);
 
     try {
-      const mediaStream = await getCameraStream();
+      const mediaStream = await getCameraStream(t);
       stream = mediaStream;
 
       if (!poseLandmarker) {
-        statusView.setStartButtonLabel("姿勢モデルを読み込んでいます…");
-        statusView.setMetricMessage(
-          "初回だけ姿勢モデルを読み込みます。しばらくお待ちください。",
-        );
-        poseLandmarker = await createLandmarker();
+        statusView.setStartButtonLabel(t.camera.loadingModel);
+        statusView.setMetricMessage(t.camera.loadingModelMessage);
+        poseLandmarker = await createLandmarker(t);
       }
 
       elements.video.srcObject = stream;
-      await playVideo(elements.video);
+      await playVideo(elements.video, t);
 
       elements.placeholder.hidden = true;
       elements.video.classList.add("visible");
       elements.statusPill.hidden = false;
       elements.calibrateButton.disabled = false;
-      statusView.setStartButtonLabel("カメラを停止");
+      statusView.setStartButtonLabel(t.camera.stop);
       elements.startButton.disabled = false;
       elements.startButton.classList.add("stop");
       elements.startButton.onclick = stopCamera;
@@ -82,7 +81,7 @@ export function createPostureWatcher(
       stream?.getTracks().forEach((track) => track.stop());
       stream = null;
       console.error(error);
-      showStartupError(getStartupErrorMessage(error));
+      showStartupError(getStartupErrorMessage(error, t));
     }
   }
 
@@ -97,7 +96,7 @@ export function createPostureWatcher(
     elements.statusPill.hidden = true;
     elements.calibrationOverlay.hidden = true;
     elements.calibrateButton.disabled = true;
-    statusView.setStartButtonLabel("カメラを起動");
+    statusView.setStartButtonLabel(t.camera.start);
     elements.startButton.classList.remove("stop");
     elements.startButton.onclick = startCamera;
     calibration.reset();
@@ -150,7 +149,7 @@ export function createPostureWatcher(
         overlay.drawPose(landmarks);
 
         if (!landmarks) {
-          elements.statusLabel.textContent = "人を探しています";
+          elements.statusLabel.textContent = t.camera.lookingForPerson;
           statusView.updateStatus("missing", 0, 0);
           return;
         }
@@ -192,19 +191,17 @@ export function createPostureWatcher(
 
   function showStartupError(message: string) {
     elements.startButton.disabled = false;
-    statusView.setStartButtonLabel("もう一度試す");
+    statusView.setStartButtonLabel(t.camera.retry);
     statusView.setMetricMessage(message);
-    statusView.setPostureBadge("bad", "起動エラー");
+    statusView.setPostureBadge("bad", t.camera.startupError);
   }
 
   function showUnsupportedStateIfNeeded() {
     if (isCameraContextAvailable()) return;
 
     elements.startButton.disabled = true;
-    statusView.setStartButtonLabel("localhost で起動してください");
-    statusView.setMetricMessage(
-      "画面は確認できますが、file:// ではカメラを利用できません。npm run dev または npm run preview を使ってください。",
-    );
+    statusView.setStartButtonLabel(t.camera.localHostRequired);
+    statusView.setMetricMessage(t.camera.filePreviewOnly);
   }
 
   window.addEventListener("resize", overlay.resizeCanvas);

@@ -149,6 +149,20 @@ button {
   gap: 12px;
 }
 
+.language-select {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  color: var(--muted);
+  font-size: 12px;
+  font-weight: 700;
+}
+
+.language-select select {
+  min-width: 94px;
+  padding: 7px 9px;
+}
+
 .menu-button,
 .close-button {
   border: 0;
@@ -214,16 +228,6 @@ button {
   align-items: end;
   gap: 64px;
   padding: 56px 0 42px;
-}
-
-.eyebrow,
-.section-label {
-  display: block;
-  margin: 0 0 10px;
-  color: var(--orange-dark);
-  font-size: 11px;
-  font-weight: 800;
-  letter-spacing: 0.2em;
 }
 
 .hero h1 {
@@ -940,7 +944,6 @@ select,
     backdrop-filter: blur(12px);
   }
 
-  .mobile-posture .section-label,
   .mobile-posture h2,
   .mobile-posture .meter-labels,
   .mobile-posture .metric-message {
@@ -952,7 +955,7 @@ select,
   }
 
   .mobile-posture .metric-heading::before {
-    content: "姿勢";
+    content: attr(data-mobile-title);
     color: var(--ink);
     font-size: 13px;
     font-weight: 800;
@@ -1022,15 +1025,32 @@ select,
     justify-content: space-between;
   }
 
+  .language-select-mobile {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) auto;
+    align-items: center;
+    width: 100%;
+    padding: 14px 0;
+    color: var(--ink);
+    font-size: 13px;
+    font-weight: 700;
+  }
+
   .drawer-head h2 {
     margin: 0;
     font-size: 19px;
   }
 
   .settings-card {
-    padding: 19px;
-    border-radius: 12px;
+    padding: 0;
+    background: transparent;
+    border: 0;
+    border-radius: 0;
     box-shadow: none;
+  }
+
+  .settings-card > h2 {
+    display: none;
   }
 
   .setting-row {
@@ -1065,6 +1085,13 @@ select,
     gap: 8px;
     color: var(--ink);
     text-decoration: none;
+  }
+
+  .menu-links a[href*="pocket-se.info"] {
+    color: var(--orange-dark);
+    text-decoration: underline;
+    text-decoration-thickness: 1px;
+    text-underline-offset: 3px;
   }
 
   .tip {

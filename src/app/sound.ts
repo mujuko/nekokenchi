@@ -1,4 +1,5 @@
 import type { AppElements } from "../ui";
+import type { Messages } from "../i18n";
 
 const SOUND_VOLUME_KEY = "nekokenchi:sound-volume";
 const SOUND_MUTED_KEY = "nekokenchi:sound-muted";
@@ -20,7 +21,7 @@ const SOUND_OPTIONS = [
 type SoundOption = (typeof SOUND_OPTIONS)[number];
 type SoundChoiceId = SoundOption["id"];
 
-export function createSoundController(elements: AppElements) {
+export function createSoundController(elements: AppElements, t: Messages) {
   let audio: AudioContext | null = null;
   let lastAudibleVolume = DEFAULT_SOUND_VOLUME;
   const audioBuffers = new Map<string, AudioBuffer>();
@@ -75,11 +76,11 @@ export function createSoundController(elements: AppElements) {
 
     elements.soundVolume.setAttribute("aria-valuetext", `${volume}%`);
     elements.muteButton.classList.toggle("muted", muted);
-    elements.muteButton.textContent = muted ? "解除" : "ミュート";
+    elements.muteButton.textContent = muted ? t.settings.unmute : t.settings.mute;
     elements.muteButton.setAttribute("aria-pressed", String(muted));
     elements.muteButton.setAttribute(
       "aria-label",
-      muted ? "通知音のミュートを解除" : "通知音をミュート",
+      muted ? t.settings.unmuteLabel : t.settings.muteLabel,
     );
   }
 

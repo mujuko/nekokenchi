@@ -1,5 +1,6 @@
 import { average, type PostureState } from "../posture";
 import type { AppElements } from "../ui";
+import type { Messages } from "../i18n";
 
 const CALIBRATION_SAMPLE_MS = 3000;
 const CALIBRATION_TRANSITION_MS = 2500;
@@ -9,6 +10,7 @@ type CalibrationStep = "good" | "transition" | "bad";
 export function createCalibrationController(
   elements: AppElements,
   onCalibrated: (state: PostureState) => void,
+  t: Messages,
 ) {
   let calibrating = false;
   let step: CalibrationStep | null = null;
@@ -23,10 +25,10 @@ export function createCalibrationController(
     samples = [];
     calibratedGoodY = null;
     elements.calibrationOverlay.hidden = false;
-    elements.calibrationTitle.textContent = "背すじを伸ばして、そのまま";
-    elements.calibrationHelp.textContent = "良い姿勢の頭の高さを覚えています";
+    elements.calibrationTitle.textContent = t.calibration.goodTitle;
+    elements.calibrationHelp.textContent = t.calibration.goodHelp;
     elements.countdown.textContent = "3";
-    elements.statusLabel.textContent = "姿勢を登録中";
+    elements.statusLabel.textContent = t.calibration.status;
     elements.statusPill.className = "status-pill calibrating";
     onCalibrated({ goodY: null, badY: null, badSince: null, lastAlertAt: null });
   }
@@ -48,8 +50,8 @@ export function createCalibrationController(
         step = "bad";
         startedAt = now;
         samples = [];
-        elements.calibrationTitle.textContent = "猫背になって、そのまま";
-        elements.calibrationHelp.textContent = "ここをアウト水準として覚えます";
+        elements.calibrationTitle.textContent = t.calibration.badTitle;
+        elements.calibrationHelp.textContent = t.calibration.badHelp;
         elements.countdown.textContent = "3";
       }
       return;
@@ -70,8 +72,8 @@ export function createCalibrationController(
       step = "transition";
       startedAt = now;
       samples = [];
-      elements.calibrationTitle.textContent = "猫背の姿勢へ";
-      elements.calibrationHelp.textContent = "頭を下げたアウト姿勢を次に登録します";
+      elements.calibrationTitle.textContent = t.calibration.transitionTitle;
+      elements.calibrationHelp.textContent = t.calibration.transitionHelp;
       elements.countdown.textContent = "3";
       return;
     }
@@ -86,7 +88,7 @@ export function createCalibrationController(
       calibrating = false;
       step = null;
       elements.calibrationOverlay.hidden = true;
-      elements.statusLabel.textContent = "見守り中";
+      elements.statusLabel.textContent = t.calibration.watching;
       elements.statusPill.className = "status-pill";
     }
   }

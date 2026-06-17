@@ -1,8 +1,8 @@
-const NOTIFICATION_TITLE = "ねこ検知";
-const NOTIFICATION_BODY = "背すじが丸まっています。姿勢を戻しましょう。";
+import type { Messages } from "../i18n";
+
 const AUTO_CLOSE_MS = 10_000;
 
-export function createDesktopNotifier() {
+export function createDesktopNotifier(t: Messages) {
   async function requestPermission() {
     if (!isNotificationSupported()) return;
     if (Notification.permission !== "default") return;
@@ -15,8 +15,8 @@ export function createDesktopNotifier() {
     if (!isNotificationSupported()) return;
     if (Notification.permission !== "granted") return;
 
-    const notification = new Notification(NOTIFICATION_TITLE, {
-      body: NOTIFICATION_BODY,
+    const notification = new Notification(t.notification.title, {
+      body: t.notification.body,
     });
 
     notification.onclick = () => {

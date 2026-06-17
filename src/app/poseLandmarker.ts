@@ -1,11 +1,12 @@
 import { FilesetResolver, PoseLandmarker } from "@mediapipe/tasks-vision";
 import { withTimeout } from "./timeout";
+import type { Messages } from "../i18n";
 
 const MODEL_URL = `${import.meta.env.BASE_URL}mediapipe/models/pose_landmarker_lite.task`;
 const WASM_URL = `${import.meta.env.BASE_URL}mediapipe/wasm`;
 const STARTUP_TIMEOUT_MS = 30_000;
 
-export async function createLandmarker() {
+export async function createLandmarker(t: Messages) {
   return withTimeout(
     (async () => {
       const vision = await FilesetResolver.forVisionTasks(WASM_URL);
@@ -22,6 +23,6 @@ export async function createLandmarker() {
       });
     })(),
     STARTUP_TIMEOUT_MS,
-    "姿勢モデルの読み込みがタイムアウトしました。",
+    t.model.timeout,
   );
 }

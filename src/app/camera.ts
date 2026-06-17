@@ -1,4 +1,5 @@
 import { withTimeout } from "./timeout";
+import type { Messages } from "../i18n";
 
 const STARTUP_TIMEOUT_MS = 30_000;
 
@@ -6,15 +7,13 @@ export function isCameraContextAvailable(): boolean {
   return Boolean(window.isSecureContext && navigator.mediaDevices?.getUserMedia);
 }
 
-export function getCameraStream(): Promise<MediaStream> {
+export function getCameraStream(t: Messages): Promise<MediaStream> {
   return new Promise((resolve, reject) => {
     let timedOut = false;
     const timeout = window.setTimeout(() => {
       timedOut = true;
       reject(
-        new Error(
-          "カメラの許可待ちがタイムアウトしました。ブラウザの許可ダイアログを確認してください。",
-        ),
+        new Error(t.camera.permissionTimeout),
       );
     }, STARTUP_TIMEOUT_MS);
 
@@ -44,28 +43,28 @@ export function getCameraStream(): Promise<MediaStream> {
   });
 }
 
-export function playVideo(video: HTMLVideoElement): Promise<void> {
+export function playVideo(video: HTMLVideoElement, t: Messages): Promise<void> {
   return withTimeout(
     video.play(),
     10_000,
-    "カメラ映像の開始がタイムアウトしました。",
+    t.camera.playTimeout,
   );
 }
 
-export function getStartupErrorMessage(error: unknown): string {
+export function getStartupErrorMessage(error: unknown, t: Messages): string {
   if (error instanceof DOMException) {
     if (error.name === "NotAllowedError") {
-      return "カメラの利用が許可されませんでした。アドレスバー横のカメラ設定から許可してください。";
+      return t.camera.permissionDenied;
     }
     if (error.name === "NotFoundError") {
-      return "利用できるカメラが見つかりませんでした。";
+      return t.camera.notFound;
     }
     if (error.name === "NotReadableError") {
-      return "カメラを使用できません。他のアプリがカメラを使っていないか確認してください。";
+      return t.camera.notReadable;
     }
   }
 
   return error instanceof Error
     ? error.message
-    : "カメラの起動中にエラーが発生しました。";
+    : t.camera.genericStartupError;
 }
