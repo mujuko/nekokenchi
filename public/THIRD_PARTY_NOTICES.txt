@@ -34,6 +34,22 @@ Source:
 License:
 - Apache License, Version 2.0
 
+Pocket Sound effects
+--------------------
+
+Files:
+- public/cat/cat10.mp3
+- public/cat/cat11.mp3
+- public/cat/cat15.mp3
+- public/cat/cat30.mp3
+
+Source:
+- Pocket Sound / ポケットサウンド
+- https://pocket-se.info/
+
+Terms:
+- https://pocket-se.info/rules/
+
 
 Apache License
 ==============
