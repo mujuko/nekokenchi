@@ -628,9 +628,9 @@ video.visible {
   justify-content: space-between;
   margin-top: 7px;
   color: #aaa398;
-  font-size: 9px;
+  font-size: 11px;
   font-weight: 800;
-  letter-spacing: 0.14em;
+  letter-spacing: 0.08em;
 }
 
 .metric-message {
@@ -639,7 +639,7 @@ video.visible {
   padding-top: 18px;
   color: var(--muted);
   border-top: 1px solid var(--border);
-  font-size: 13px;
+  font-size: 14px;
   line-height: 1.7;
 }
 
@@ -668,8 +668,8 @@ video.visible {
 
 .setting-row small {
   color: #999186;
-  font-size: 10px;
-  line-height: 1.5;
+  font-size: 12px;
+  line-height: 1.55;
 }
 
 select,
@@ -775,8 +775,8 @@ select,
 
 .tip p {
   margin: 0;
-  font-size: 11px;
-  line-height: 1.7;
+  font-size: 12px;
+  line-height: 1.75;
 }
 
 .tip b {
@@ -792,7 +792,7 @@ select,
   gap: 18px;
   padding: 34px 0 0;
   color: var(--muted);
-  font-size: 12px;
+  font-size: 13px;
   font-weight: 700;
 }
 
