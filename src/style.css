@@ -254,6 +254,7 @@ button {
 .workspace {
   display: grid;
   grid-template-columns: minmax(0, 1.65fr) minmax(300px, 0.75fr);
+  align-items: start;
   gap: 24px;
 }
 
@@ -275,7 +276,8 @@ button {
 .camera-stage {
   position: relative;
   flex: 1 1 auto;
-  min-height: 480px;
+  aspect-ratio: 4 / 3;
+  min-height: 0;
   overflow: hidden;
   border-radius: 16px;
   background:
@@ -810,7 +812,7 @@ select,
   }
 
   .camera-stage {
-    min-height: min(480px, 62vw);
+    min-height: 0;
   }
 }
 
@@ -874,8 +876,7 @@ select,
   }
 
   .camera-stage {
-    min-height: 0;
-    height: calc(100dvh - 150px);
+    height: auto;
     border-radius: 11px;
   }
 
