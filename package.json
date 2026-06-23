@@ -11,7 +11,9 @@
     "deploy:tagged": "node scripts/deploy-if-tagged.mjs",
     "test": "vitest run",
     "preview": "vite preview",
-    "preview:https": "node scripts/ensure-dev-cert.mjs && VITE_DEV_HTTPS=1 vite preview --host 0.0.0.0"
+    "preview:https": "node scripts/ensure-dev-cert.mjs && VITE_DEV_HTTPS=1 vite preview --host 0.0.0.0",
+    "deploy:dev": "npx wrangler versions upload --env dev",
+    "deploy:prod": "node scripts/deploy-if-tagged.mjs --env production"
   },
   "dependencies": {
     "@mediapipe/tasks-vision": "^0.10.35"
