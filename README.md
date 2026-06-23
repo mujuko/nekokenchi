@@ -98,6 +98,7 @@ npm run deploy:prod
 3. main のマージ後コミットに、`package.json` のバージョンと一致する `v*` タグを作成して push します。
    タグ push により本番環境へ配られます。
 
+一連の手順を自動実行するコマンド：
 ```bash
 npm run pre-release
 ```
@@ -114,6 +115,15 @@ npm run pre-release -- major
 
 ```bash
 npm run pre-release -- --dry-run
+```
+
+手動で実行する場合：
+```bash
+git switch -c release/v1.0.2 origin/main
+npm version patch --no-git-tag-version
+git add package.json package-lock.json
+git commit -m "chore: release v1.0.2"
+git push origin release/v1.0.2
 ```
 
 PR マージ後、main の最新コミットにタグを付けます。
