@@ -35,10 +35,11 @@ function run(command, args, options = {}) {
     return { status: 0, stdout: "", stderr: "" };
   }
 
-  const result = spawnSync(command, args, {
+  const executable = process.platform === "win32" && command === "npm" ? "npm.cmd" : command;
+  const result = spawnSync(executable, args, {
     encoding: "utf8",
     stdio: options.stdio ?? "pipe",
-    shell: process.platform === "win32",
+    shell: false,
   });
 
   if (result.status !== 0 && options.check !== false) {
