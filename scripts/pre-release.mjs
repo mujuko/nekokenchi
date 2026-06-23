@@ -35,14 +35,27 @@ function run(command, args, options = {}) {
     return { status: 0, stdout: "", stderr: "" };
   }
 
-  const executable = process.platform === "win32" && command === "npm" ? "npm.cmd" : command;
-  const result = spawnSync(executable, args, {
+  let executable = command;
+  let commandArgs = args;
+
+  if (process.platform === "win32" && command === "npm") {
+    if (process.env.npm_execpath) {
+      executable = process.env.npm_node_execpath ?? process.execPath;
+      commandArgs = [process.env.npm_execpath, ...args];
+    } else {
+      executable = process.env.ComSpec ?? "cmd.exe";
+      commandArgs = ["/d", "/s", "/c", "npm.cmd", ...args];
+    }
+  }
+
+  const result = spawnSync(executable, commandArgs, {
     encoding: "utf8",
     stdio: options.stdio ?? "pipe",
     shell: false,
   });
 
   if (result.status !== 0 && options.check !== false) {
+    if (result.error) console.error(`Failed to run ${command}: ${result.error.message}`);
     if (result.stdout) process.stdout.write(result.stdout);
     if (result.stderr) process.stderr.write(result.stderr);
     process.exit(result.status ?? 1);
