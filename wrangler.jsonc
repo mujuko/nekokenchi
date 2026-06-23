@@ -3,5 +3,19 @@
   "compatibility_date": "2026-06-16",
   "assets": {
     "directory": "./dist"
+  },
+  "env": {
+    "dev": {
+      "name": "nekokenchi-dev",
+      "assets": {
+        "directory": "./dist"
+      }
+    },
+    "production": {
+      "name": "nekokenchi",
+      "assets": {
+        "directory": "./dist"
+      }
+    }
   }
 }
