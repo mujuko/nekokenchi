@@ -38,11 +38,11 @@ if (!matchingTags.includes(expectedTag)) {
 console.log(`deploy tagged version: ${expectedTag}`);
 
 if (process.env.DEPLOY_DRY_RUN === "1") {
-  console.log("dry run: skipping wrangler upload");
+  console.log("dry run: skipping wrangler deploy");
   process.exit(0);
 }
 
-const upload = run("npx", ["wrangler", "versions", "upload", ...passthroughArgs], {
+const upload = run("npx", ["wrangler", "deploy", ...passthroughArgs], {
   stdio: "inherit",
 });
 
