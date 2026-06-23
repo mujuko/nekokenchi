@@ -1,4 +1,11 @@
+import { readFileSync } from "node:fs";
 import { spawnSync } from "node:child_process";
+
+const passthroughArgs = process.argv.slice(2);
+const packageJson = JSON.parse(
+  readFileSync(new URL("../package.json", import.meta.url), "utf8"),
+);
+const expectedTag = `v${packageJson.version}`;
 
 function run(command, args, options = {}) {
   return spawnSync(command, args, {
@@ -10,21 +17,32 @@ function run(command, args, options = {}) {
 
 run("git", ["fetch", "--tags", "--force"], { stdio: "inherit" });
 
-const tag = run("git", ["describe", "--tags", "--exact-match", "HEAD"]);
+const tags = run("git", ["tag", "--points-at", "HEAD"]);
+const matchingTags = tags.stdout
+  .split("\n")
+  .map((tag) => tag.trim())
+  .filter(Boolean);
 
-if (tag.status !== 0) {
-  console.log("skip deploy: HEAD is not tagged");
-  process.exit(0);
+if (!matchingTags.includes(expectedTag)) {
+  if (matchingTags.length === 0) {
+    console.log("skip deploy: HEAD is not tagged");
+    process.exit(0);
+  }
+
+  console.error(
+    `refuse deploy: package.json version ${packageJson.version} requires tag ${expectedTag}, but HEAD has ${matchingTags.join(", ")}`,
+  );
+  process.exit(1);
 }
 
-console.log(`deploy tagged version: ${tag.stdout.trim()}`);
+console.log(`deploy tagged version: ${expectedTag}`);
 
 if (process.env.DEPLOY_DRY_RUN === "1") {
-  console.log("dry run: skipping wrangler upload");
+  console.log("dry run: skipping wrangler deploy");
   process.exit(0);
 }
 
-const upload = run("npx", ["wrangler", "versions", "upload"], {
+const upload = run("npx", ["wrangler", "deploy", ...passthroughArgs], {
   stdio: "inherit",
 });
 
