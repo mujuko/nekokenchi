@@ -62,7 +62,23 @@ export function renderApp(appVersion: string, t: Messages, locale: Locale) {
               </svg>
               <span id="start-button-label">${t.camera.start}</span>
             </button>
-            <button class="button secondary" id="calibrate-button" disabled>${t.camera.recalibrate}</button>
+            <button class="button secondary" id="pause-button" type="button" disabled>
+              <svg class="button-icon" id="pause-button-pause-icon" aria-hidden="true" viewBox="0 0 24 24">
+                <path d="M8 5v14"></path>
+                <path d="M16 5v14"></path>
+              </svg>
+              <svg class="button-icon" id="pause-button-resume-icon" aria-hidden="true" viewBox="0 0 24 24" hidden>
+                <path d="m8 5 11 7-11 7Z"></path>
+              </svg>
+              <span id="pause-button-label">${t.camera.pause}</span>
+            </button>
+            <button class="button secondary" id="calibrate-button" disabled>
+              <svg class="button-icon" aria-hidden="true" viewBox="0 0 24 24">
+                <path d="M20 11a8.1 8.1 0 0 0-15.5-2M4 4v5h5"></path>
+                <path d="M4 13a8.1 8.1 0 0 0 15.5 2M20 20v-5h-5"></path>
+              </svg>
+              <span id="calibrate-button-label">${t.camera.recalibrate}</span>
+            </button>
           </div>
         </div>
 
@@ -213,7 +229,8 @@ export function updateAppLocale(
 
   setText("#camera-placeholder h2", t.camera.placeholderTitle);
   setText("#camera-placeholder p", t.camera.placeholderCopy);
-  elements.calibrateButton.textContent = t.camera.recalibrate;
+  elements.pauseButtonLabel.textContent = t.camera.pause;
+  elements.calibrateButtonLabel.textContent = t.camera.recalibrate;
   elements.alertFlash.textContent = t.camera.alert;
 
   elements.mobileMenu.setAttribute("aria-label", t.settings.panelAria);
@@ -292,7 +309,12 @@ export function getAppElements() {
     calibrationHelp: query<HTMLElement>("#calibration-help"),
     startButton: query<HTMLButtonElement>("#start-button"),
     startButtonLabel: query<HTMLSpanElement>("#start-button-label"),
+    pauseButton: query<HTMLButtonElement>("#pause-button"),
+    pauseButtonLabel: query<HTMLSpanElement>("#pause-button-label"),
+    pauseButtonPauseIcon: query<SVGElement>("#pause-button-pause-icon"),
+    pauseButtonResumeIcon: query<SVGElement>("#pause-button-resume-icon"),
     calibrateButton: query<HTMLButtonElement>("#calibrate-button"),
+    calibrateButtonLabel: query<HTMLSpanElement>("#calibrate-button-label"),
     statusPill: query<HTMLDivElement>("#status-pill"),
     statusLabel: query<HTMLElement>("#status-label"),
     postureBadges: queryAll<HTMLDivElement>("[data-posture-badge]"),
