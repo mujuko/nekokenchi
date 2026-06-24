@@ -5,10 +5,12 @@ import {
 } from "@mediapipe/tasks-vision";
 import type { PostureState } from "../posture";
 import type { AppElements } from "../ui";
+import type { DisplaySettings } from "./displaySettings";
 
 export function createOverlay(
   elements: AppElements,
   getPostureState: () => PostureState,
+  getDisplaySettings: () => DisplaySettings,
 ) {
   function resizeCanvas() {
     elements.canvas.width =
@@ -27,20 +29,27 @@ export function createOverlay(
     if (!landmarks) return;
 
     const context = elements.canvas.getContext("2d")!;
-    const drawing = new DrawingUtils(context);
-    drawing.drawConnectors(landmarks, PoseLandmarker.POSE_CONNECTIONS, {
-      color: "rgba(255, 255, 255, .5)",
-      lineWidth: 3,
-    });
-    drawing.drawLandmarks(landmarks, {
-      color: "#f3a33a",
-      fillColor: "#fff7e9",
-      radius: 3,
-      lineWidth: 1,
-    });
+    const displaySettings = getDisplaySettings();
+    if (displaySettings.poseGuide) {
+      const drawing = new DrawingUtils(context);
+      drawing.drawConnectors(landmarks, PoseLandmarker.POSE_CONNECTIONS, {
+        color: "rgba(255, 255, 255, .5)",
+        lineWidth: 3,
+      });
+      drawing.drawLandmarks(landmarks, {
+        color: "#f3a33a",
+        fillColor: "#fff7e9",
+        radius: 3,
+        lineWidth: 1,
+      });
+    }
 
-    drawCalibrationLine(getPostureState().goodY, "rgba(243, 163, 58, .9)", [10, 10]);
-    drawCalibrationLine(getPostureState().badY, "rgba(233, 91, 70, .9)", [4, 8]);
+    if (displaySettings.uprightLine) {
+      drawCalibrationLine(getPostureState().goodY, "rgba(243, 163, 58, .9)", [10, 10]);
+    }
+    if (displaySettings.slouchLine) {
+      drawCalibrationLine(getPostureState().badY, "rgba(233, 91, 70, .9)", [4, 8]);
+    }
   }
 
   function drawCalibrationLine(
