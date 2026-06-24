@@ -814,6 +814,10 @@ select,
   font-weight: 700;
 }
 
+.app-footer a {
+  color: var(--orange-dark);
+}
+
 .drawer-head,
 .menu-links {
   display: none;
