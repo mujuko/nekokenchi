@@ -51,7 +51,7 @@ export function renderApp(appVersion: string, t: Messages, locale: Locale) {
             <div class="status-pill" id="status-pill" hidden>
               <span></span><b id="status-label">${t.camera.statusMeasuring}</b>
             </div>
-            ${posturePanel("mobile-posture", true)}
+            ${posturePanel()}
             <div class="alert-flash" id="alert-flash" hidden>${t.camera.alert}</div>
           </div>
           <div class="camera-actions">
@@ -91,7 +91,6 @@ export function renderApp(appVersion: string, t: Messages, locale: Locale) {
             <button class="close-button" id="close-menu-button" type="button" aria-label="${t.header.closeMenu}">×</button>
           </div>
           <div class="mobile-only">${languageSelect(t, locale, "mobile")}</div>
-          ${posturePanel("desktop-posture", false)}
           ${settingsPanel()}
           <div class="tip">
             <span class="tip-icon">i</span>
@@ -111,20 +110,13 @@ export function renderApp(appVersion: string, t: Messages, locale: Locale) {
       </footer>
     </main>
   `;
-  function posturePanel(extraClass: string, mobile: boolean) {
+  function posturePanel() {
     return `
-      <div class="metric-card ${extraClass} ${mobile ? "mobile-only" : "desktop-metric"}" data-mobile-title="${t.posture.mobileTitle}">
-        <div class="metric-heading">
-          <div>
-            <h2>${t.posture.title}</h2>
-          </div>
-          <div class="posture-badge idle" data-posture-badge>${t.posture.idleBadge}</div>
-        </div>
+      <div class="metric-card posture-overlay">
         <div class="meter">
           <div class="meter-track"><div class="meter-fill" data-meter-fill></div></div>
-          <div class="meter-labels"><span>${t.posture.goodMeter}</span><span>${t.posture.badMeter}</span></div>
         </div>
-        <p class="metric-message" data-metric-message>${t.posture.idleMessage}</p>
+        <div class="posture-badge idle" data-posture-badge>${t.posture.idleBadge}</div>
       </div>
     `;
   }
@@ -149,6 +141,15 @@ export function renderApp(appVersion: string, t: Messages, locale: Locale) {
             <option value="5000">${t.settings.seconds(5)}</option>
           </select>
         </label>
+        <div class="setting-row display-setting">
+          <span><b>${t.settings.display}</b><small>${t.settings.displayHelp}</small></span>
+          <div class="display-choice-list" aria-label="${t.settings.displayLabel}">
+            <label><input type="checkbox" value="video" data-display-choice checked>${t.settings.showVideo}</label>
+            <label><input type="checkbox" value="poseGuide" data-display-choice checked>${t.settings.showPoseGuide}</label>
+            <label><input type="checkbox" value="uprightLine" data-display-choice checked>${t.settings.showUprightLine}</label>
+            <label><input type="checkbox" value="slouchLine" data-display-choice checked>${t.settings.showSlouchLine}</label>
+          </div>
+        </div>
         <div class="setting-row sound-setting">
           <span><b>${t.settings.sound}</b><small>${t.settings.soundHelp}</small></span>
           <div class="sound-controls">
@@ -236,16 +237,6 @@ export function updateAppLocale(
   elements.mobileMenu.setAttribute("aria-label", t.settings.panelAria);
   setText(".drawer-head h2", t.settings.menuTitle);
   elements.closeMenuButton?.setAttribute("aria-label", t.header.closeMenu);
-  document
-    .querySelectorAll<HTMLElement>(".metric-card")
-    .forEach((card) => {
-      card.dataset.mobileTitle = t.posture.mobileTitle;
-      card.querySelector("h2")!.textContent = t.posture.title;
-      const meterLabels = card.querySelectorAll(".meter-labels span");
-      meterLabels[0].textContent = t.posture.goodMeter;
-      meterLabels[1].textContent = t.posture.badMeter;
-    });
-
   setText(".settings-card h2", t.settings.panelTitle);
   updateSettingRow("#sensitivity", t.settings.sensitivity, t.settings.sensitivityHelp);
   updateSelectOption(elements.sensitivity, "0.9", t.settings.sensitivityLoose);
@@ -255,6 +246,24 @@ export function updateAppLocale(
   updateSelectOption(elements.duration, "2000", t.settings.seconds(2));
   updateSelectOption(elements.duration, "3000", t.settings.seconds(3));
   updateSelectOption(elements.duration, "5000", t.settings.seconds(5));
+
+  const displaySetting = document.querySelector(".display-setting");
+  displaySetting?.querySelector("b")?.replaceChildren(t.settings.display);
+  displaySetting?.querySelector("small")?.replaceChildren(t.settings.displayHelp);
+  displaySetting
+    ?.querySelector(".display-choice-list")
+    ?.setAttribute("aria-label", t.settings.displayLabel);
+  const displayLabels = [
+    t.settings.showVideo,
+    t.settings.showPoseGuide,
+    t.settings.showUprightLine,
+    t.settings.showSlouchLine,
+  ];
+  elements.displayChoices.forEach((choice, index) => {
+    if (choice.parentElement?.lastChild) {
+      choice.parentElement.lastChild.textContent = displayLabels[index];
+    }
+  });
 
   const soundSetting = document.querySelector(".sound-setting");
   soundSetting?.querySelector("b")?.replaceChildren(t.settings.sound);
@@ -319,9 +328,9 @@ export function getAppElements() {
     statusLabel: query<HTMLElement>("#status-label"),
     postureBadges: queryAll<HTMLDivElement>("[data-posture-badge]"),
     meterFills: queryAll<HTMLDivElement>("[data-meter-fill]"),
-    metricMessages: queryAll<HTMLParagraphElement>("[data-metric-message]"),
     sensitivity: query<HTMLSelectElement>("#sensitivity"),
     duration: query<HTMLSelectElement>("#duration"),
+    displayChoices: queryAll<HTMLInputElement>("[data-display-choice]"),
     soundChoices: queryAll<HTMLInputElement>("[data-sound-choice]"),
     soundVolume: query<HTMLInputElement>("#sound-volume"),
     muteButton: query<HTMLButtonElement>("#mute-button"),

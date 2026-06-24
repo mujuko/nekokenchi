@@ -14,6 +14,7 @@ import { createOverlay } from "./overlay";
 import { createLandmarker } from "./poseLandmarker";
 import type { SoundController } from "./sound";
 import type { StatusView } from "./statusView";
+import type { DisplaySettingsController } from "./displaySettings";
 
 type MessagesProvider = () => Messages;
 
@@ -21,6 +22,7 @@ export function createPostureWatcher(
   elements: AppElements,
   statusView: StatusView,
   sound: SoundController,
+  displaySettings: DisplaySettingsController,
   getMessages: MessagesProvider,
 ) {
   const BACKGROUND_PREDICTION_INTERVAL_MS = 125;
@@ -34,7 +36,11 @@ export function createPostureWatcher(
   let paused = false;
   let postureState: PostureState = createEmptyPostureState();
 
-  const overlay = createOverlay(elements, () => postureState);
+  const overlay = createOverlay(
+    elements,
+    () => postureState,
+    displaySettings.getSettings,
+  );
   const desktopNotifier = createDesktopNotifier(getMessages);
   const calibration = createCalibrationController(
     elements,
@@ -64,7 +70,7 @@ export function createPostureWatcher(
       if (!poseLandmarker) {
         const loadingMessages = getMessages();
         statusView.setStartButtonLabel(loadingMessages.camera.loadingModel);
-        statusView.setMetricMessage(loadingMessages.camera.loadingModelMessage);
+        statusView.setCameraMessage(loadingMessages.camera.loadingModelMessage);
         poseLandmarker = await createLandmarker(loadingMessages);
       }
 
@@ -242,7 +248,7 @@ export function createPostureWatcher(
     const t = getMessages();
     elements.startButton.disabled = false;
     statusView.setStartButtonLabel(t.camera.retry);
-    statusView.setMetricMessage(message);
+    statusView.setCameraMessage(message);
     statusView.setPostureBadge("bad", t.camera.startupError);
   }
 
@@ -252,7 +258,7 @@ export function createPostureWatcher(
     elements.startButton.disabled = true;
     const t = getMessages();
     statusView.setStartButtonLabel(t.camera.localHostRequired);
-    statusView.setMetricMessage(t.camera.filePreviewOnly);
+    statusView.setCameraMessage(t.camera.filePreviewOnly);
   }
 
   function refreshLocale() {

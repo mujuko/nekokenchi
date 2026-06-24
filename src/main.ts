@@ -3,6 +3,7 @@ import { createPostureWatcher } from "./app/postureWatcher";
 import { createSoundController } from "./app/sound";
 import { createStatusView } from "./app/statusView";
 import { bindMobileMenu } from "./app/mobileMenu";
+import { createDisplaySettingsController } from "./app/displaySettings";
 import { getAppElements, renderApp, updateAppLocale } from "./ui";
 import {
   getMessages,
@@ -30,10 +31,12 @@ document.querySelector<HTMLDivElement>("#app")!.innerHTML = renderApp(
 const elements = getAppElements();
 const statusView = createStatusView(elements, getCurrentMessages);
 const sound = createSoundController(elements, getCurrentMessages);
+const displaySettings = createDisplaySettingsController(elements);
 const postureWatcher = createPostureWatcher(
   elements,
   statusView,
   sound,
+  displaySettings,
   getCurrentMessages,
 );
 
@@ -53,9 +56,11 @@ elements.localeSelects.forEach((select) => {
 });
 
 sound.bindControls();
+displaySettings.bindControls();
 bindMobileMenu(elements);
 postureWatcher.showUnsupportedStateIfNeeded();
 sound.loadSettings();
+displaySettings.loadSettings();
 
 function getInitialLocale(): Locale {
   const savedLocale = localStorage.getItem(LOCALE_STORAGE_KEY);

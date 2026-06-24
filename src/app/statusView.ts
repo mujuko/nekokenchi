@@ -13,10 +13,8 @@ export function createStatusView(elements: AppElements, getMessages: MessagesPro
     elements.startButtonLabel.textContent = label;
   }
 
-  function setMetricMessage(message: string) {
-    elements.metricMessages.forEach((element) => {
-      element.textContent = message;
-    });
+  function setCameraMessage(message: string) {
+    elements.placeholder.querySelector("p")!.textContent = message;
   }
 
   function setPostureBadge(status: PostureViewStatus, text: string) {
@@ -45,7 +43,6 @@ export function createStatusView(elements: AppElements, getMessages: MessagesPro
 
     if (status === "good") {
       setPostureBadge(status, t.posture.goodBadge);
-      setMetricMessage(t.posture.goodMessage);
       elements.statusLabel.textContent = t.calibration.watching;
       elements.statusPill.className = "status-pill";
     } else if (status === "bad") {
@@ -57,25 +54,17 @@ export function createStatusView(elements: AppElements, getMessages: MessagesPro
         status,
         remaining > 0 ? t.posture.badCountdown(remaining) : t.posture.badBadge,
       );
-      setMetricMessage(
-        remaining > 0
-          ? t.posture.badMessageWarning
-          : t.posture.badMessageAlert,
-      );
       elements.statusLabel.textContent = t.posture.badStatus;
       elements.statusPill.className = "status-pill warning";
     } else if (status === "missing") {
       setPostureBadge(status, t.posture.missingBadge);
-      setMetricMessage(t.posture.missingMessage);
       elements.statusLabel.textContent = t.camera.lookingForPerson;
     } else if (status === "paused") {
       setPostureBadge(status, t.posture.pausedBadge);
-      setMetricMessage(t.posture.pausedMessage);
       elements.statusLabel.textContent = t.camera.statusPaused;
       elements.statusPill.className = "status-pill paused";
     } else {
       setPostureBadge(status, t.posture.idleBadge);
-      setMetricMessage(t.posture.idleMessage);
     }
   }
 
@@ -86,7 +75,7 @@ export function createStatusView(elements: AppElements, getMessages: MessagesPro
   return {
     refreshLocale,
     setStartButtonLabel,
-    setMetricMessage,
+    setCameraMessage,
     setPostureBadge,
     setMeterProgress,
     updateStatus,
