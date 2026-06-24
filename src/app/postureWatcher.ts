@@ -31,6 +31,7 @@ export function createPostureWatcher(
   let backgroundTimer = 0;
   let lastVideoTime = -1;
   let predicting = false;
+  let paused = false;
   let postureState: PostureState = createEmptyPostureState();
 
   const overlay = createOverlay(elements, () => postureState);
@@ -73,6 +74,8 @@ export function createPostureWatcher(
       elements.placeholder.hidden = true;
       elements.video.classList.add("visible");
       elements.statusPill.hidden = false;
+      elements.pauseButton.disabled = true;
+      elements.pauseButton.textContent = getMessages().camera.pause;
       elements.calibrateButton.disabled = false;
       statusView.setStartButtonLabel(getMessages().camera.stop);
       elements.startButton.disabled = false;
@@ -99,13 +102,47 @@ export function createPostureWatcher(
     elements.placeholder.hidden = false;
     elements.statusPill.hidden = true;
     elements.calibrationOverlay.hidden = true;
+    calibration.reset();
+    paused = false;
+    elements.pauseButton.disabled = true;
+    elements.pauseButton.textContent = getMessages().camera.pause;
     elements.calibrateButton.disabled = true;
     statusView.setStartButtonLabel(getMessages().camera.start);
     elements.startButton.classList.remove("stop");
     elements.startButton.onclick = startCamera;
-    calibration.reset();
     postureState = createEmptyPostureState();
     statusView.updateStatus("idle", 0, 0);
+  }
+
+  function pauseDetection() {
+    if (!stream || paused || calibration.isCalibrating()) return;
+
+    paused = true;
+    cancelScheduledPrediction();
+    overlay.clear();
+    elements.calibrationOverlay.hidden = true;
+    elements.pauseButton.textContent = getMessages().camera.resume;
+    elements.calibrateButton.disabled = true;
+    statusView.updateStatus("paused", 0, 0);
+  }
+
+  function resumeDetection() {
+    if (!stream || !paused) return;
+
+    paused = false;
+    elements.pauseButton.textContent = getMessages().camera.pause;
+    elements.calibrateButton.disabled = false;
+    statusView.updateStatus("idle", 0, 0);
+    scheduleNextPrediction();
+  }
+
+  function toggleDetectionPause() {
+    if (paused) {
+      resumeDetection();
+      return;
+    }
+
+    pauseDetection();
   }
 
   function cancelScheduledPrediction() {
@@ -132,7 +169,7 @@ export function createPostureWatcher(
   }
 
   function predict() {
-    if (!poseLandmarker || !stream) return;
+    if (!poseLandmarker || !stream || paused) return;
     if (predicting) {
       scheduleNextPrediction();
       return;
@@ -144,7 +181,7 @@ export function createPostureWatcher(
       predicting = true;
       poseLandmarker.detectForVideo(elements.video, now, (poseResult) => {
         predicting = false;
-        if (!stream) {
+        if (!stream || paused) {
           overlay.clear();
           return;
         }
@@ -166,6 +203,7 @@ export function createPostureWatcher(
 
         if (calibration.isCalibrating()) {
           calibration.handleSample(nose.y, now);
+          elements.pauseButton.disabled = calibration.isCalibrating();
           return;
         }
 
@@ -222,6 +260,7 @@ export function createPostureWatcher(
     }
 
     if (stream) {
+      elements.pauseButton.textContent = paused ? t.camera.resume : t.camera.pause;
       statusView.setStartButtonLabel(t.camera.stop);
       return;
     }
@@ -231,14 +270,23 @@ export function createPostureWatcher(
     }
   }
 
+  function beginCalibration() {
+    if (paused) resumeDetection();
+    elements.pauseButton.disabled = true;
+    elements.pauseButton.textContent = getMessages().camera.pause;
+    calibration.begin();
+  }
+
   window.addEventListener("resize", overlay.resizeCanvas);
   document.addEventListener("visibilitychange", () => {
-    if (!stream) return;
+    if (!stream || paused) return;
     scheduleNextPrediction();
   });
 
+  elements.pauseButton.onclick = toggleDetectionPause;
+
   return {
-    beginCalibration: calibration.begin,
+    beginCalibration,
     refreshLocale,
     showUnsupportedStateIfNeeded,
     startCamera,

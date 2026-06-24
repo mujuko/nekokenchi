@@ -540,6 +540,10 @@ video.visible {
   animation: pulse 1s ease infinite;
 }
 
+.status-pill.paused span {
+  background: #b8b1a5;
+}
+
 @keyframes pulse {
   50% { opacity: 0.35; }
 }
@@ -606,6 +610,11 @@ video.visible {
 .posture-badge.bad {
   color: #9a531d;
   background: #ffdfb2;
+}
+
+.posture-badge.paused {
+  color: #5d5960;
+  background: #e7e2dc;
 }
 
 .meter {

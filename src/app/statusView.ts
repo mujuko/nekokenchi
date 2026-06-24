@@ -1,7 +1,7 @@
 import type { AppElements } from "../ui";
 import type { Messages } from "../i18n";
 
-export type PostureViewStatus = "idle" | "missing" | "good" | "bad";
+export type PostureViewStatus = "idle" | "missing" | "good" | "bad" | "paused";
 type MessagesProvider = () => Messages;
 
 export function createStatusView(elements: AppElements, getMessages: MessagesProvider) {
@@ -68,6 +68,11 @@ export function createStatusView(elements: AppElements, getMessages: MessagesPro
       setPostureBadge(status, t.posture.missingBadge);
       setMetricMessage(t.posture.missingMessage);
       elements.statusLabel.textContent = t.camera.lookingForPerson;
+    } else if (status === "paused") {
+      setPostureBadge(status, t.posture.pausedBadge);
+      setMetricMessage(t.posture.pausedMessage);
+      elements.statusLabel.textContent = t.camera.statusPaused;
+      elements.statusPill.className = "status-pill paused";
     } else {
       setPostureBadge(status, t.posture.idleBadge);
       setMetricMessage(t.posture.idleMessage);

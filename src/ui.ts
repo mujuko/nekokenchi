@@ -62,6 +62,7 @@ export function renderApp(appVersion: string, t: Messages, locale: Locale) {
               </svg>
               <span id="start-button-label">${t.camera.start}</span>
             </button>
+            <button class="button secondary" id="pause-button" type="button" disabled>${t.camera.pause}</button>
             <button class="button secondary" id="calibrate-button" disabled>${t.camera.recalibrate}</button>
           </div>
         </div>
@@ -213,6 +214,7 @@ export function updateAppLocale(
 
   setText("#camera-placeholder h2", t.camera.placeholderTitle);
   setText("#camera-placeholder p", t.camera.placeholderCopy);
+  elements.pauseButton.textContent = t.camera.pause;
   elements.calibrateButton.textContent = t.camera.recalibrate;
   elements.alertFlash.textContent = t.camera.alert;
 
@@ -292,6 +294,7 @@ export function getAppElements() {
     calibrationHelp: query<HTMLElement>("#calibration-help"),
     startButton: query<HTMLButtonElement>("#start-button"),
     startButtonLabel: query<HTMLSpanElement>("#start-button-label"),
+    pauseButton: query<HTMLButtonElement>("#pause-button"),
     calibrateButton: query<HTMLButtonElement>("#calibrate-button"),
     statusPill: query<HTMLDivElement>("#status-pill"),
     statusLabel: query<HTMLElement>("#status-label"),
